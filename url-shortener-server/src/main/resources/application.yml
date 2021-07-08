@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: kmanage-api
+  redis:
+    lettuce:
+      pool:
+        max-active: 600
+        max-idle: 50
+        min-idle: 5
+        max-wait: -1ms
+      shutdown-timeout: 100ms
+    host: redis
+    password: p@ss$12E45
+    port: 6379
+    ssl: false
+    timeout: 5000ms
+  cache:
+    type: redis
+  jpa:
+    open-in-view: true
