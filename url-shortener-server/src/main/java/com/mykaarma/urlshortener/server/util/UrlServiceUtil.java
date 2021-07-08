@@ -15,7 +15,7 @@ import com.mykaarma.urlshortener.model.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.model.exception.InternalServerException;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 
-import io.micrometer.core.instrument.util.IOUtils;
+
 import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j

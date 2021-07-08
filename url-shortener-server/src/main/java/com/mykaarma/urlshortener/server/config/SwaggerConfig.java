@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 import com.fasterxml.classmate.TypeResolver;
 
-import io.micrometer.core.instrument.MeterRegistry;
+
 
 @Configuration
 @EnableSwagger2
