@@ -23,6 +23,7 @@ import com.mykaarma.urlshortener.model.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
+import com.mykaarma.urlshortener.model.utils.RestURIConstants;
 import com.mykaarma.urlshortener.server.repository.ShortUrlAttributesRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 import com.mykaarma.urlshortener.server.util.UrlServiceUtil;
@@ -159,7 +160,7 @@ public class UrlService {
 
 		} while (!urlServiceUtil.isValid(hash));
 
-		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() + "/" + hash;
+		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() + "/"+RestURIConstants.REDIRECT +"/"+ hash;
 
 		log.info("Created  a new ShortUrl={} for longUrl={},businessId={}", shortUrl, longUrl, businessId);
 
