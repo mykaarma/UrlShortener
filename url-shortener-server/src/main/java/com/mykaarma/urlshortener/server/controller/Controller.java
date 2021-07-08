@@ -73,9 +73,7 @@ public class Controller {
 			@Authorization(value = "basicAuth") })
 	@GetMapping(value = "/" + RestURIConstants.REDIRECT  + "/"
 			+ RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE, produces = MediaType.TEXT_HTML_VALUE)
-	public ResponseEntity<String> redirectToLongUrl(@PathVariable(value = "scheme") String scheme,
-			@PathVariable(value = "shortUrlDomain") String shortUrlDomain,
-			@PathVariable(value = "shortUrlHash") String shortUrlHash) throws Exception {
+	public ResponseEntity<String> redirectToLongUrl(@PathVariable(value = "shortUrlHash") String shortUrlHash) throws Exception {
 
 		String longUrl = null;
 
