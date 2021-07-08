@@ -40,7 +40,11 @@ public class SwaggerConfig {
 	private TypeResolver typeResolver;
 	
 	
-	
+	@Bean
+	MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
+	return registry -> registry.config().commonTags("application", "adp-customer-adapter","instance",
+	"adp-customer-adapter");}
+
 	
 
 	
