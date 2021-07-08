@@ -18,3 +18,8 @@ spring:
     type: redis
   jpa:
     open-in-view: true
+    
+    
+    
+
+    
