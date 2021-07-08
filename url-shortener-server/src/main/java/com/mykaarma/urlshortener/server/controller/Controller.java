@@ -71,8 +71,7 @@ public class Controller {
 
 	@ApiOperation(value = "Redirect to Long Url using ShortUrl", authorizations = {
 			@Authorization(value = "basicAuth") })
-	@GetMapping(value = "/" + RestURIConstants.REDIRECT + "/" + RestURIConstants.SCHEME_PATH_VARIABLE + "://"
-			+ RestURIConstants.SHORT_URL_DOMAIN_PATH_VARIABLE + "/"
+	@GetMapping(value = "/" + RestURIConstants.REDIRECT  + "/"
 			+ RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE, produces = MediaType.TEXT_HTML_VALUE)
 	public ResponseEntity<String> redirectToLongUrl(@PathVariable(value = "scheme") String scheme,
 			@PathVariable(value = "shortUrlDomain") String shortUrlDomain,
@@ -80,7 +79,7 @@ public class Controller {
 
 		String longUrl = null;
 
-		longUrl = urlService.findLongUrl(scheme, shortUrlDomain, shortUrlHash);
+		longUrl = urlService.findLongUrl( shortUrlHash);
 
 		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(longUrl);
 
