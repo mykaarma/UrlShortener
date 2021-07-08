@@ -1,6 +1,6 @@
 package com.mykaarma.urlshortener.server.config;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -29,11 +29,25 @@ import java.util.List;
 import java.util.Set;
 import com.fasterxml.classmate.TypeResolver;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
+
+
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
 	@Autowired
 	private TypeResolver typeResolver;
+	
+	
+	@Bean
+	MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
+	return registry -> registry.config().commonTags("application", "adp-customer-adapter","instance",
+	"adp-customer-adapter");}
+
+	
+
+	
 
     /**
      * Swagger Group Configuration for V2

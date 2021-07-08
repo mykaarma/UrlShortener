@@ -23,6 +23,7 @@ import com.mykaarma.urlshortener.model.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
+import com.mykaarma.urlshortener.model.utils.RestURIConstants;
 import com.mykaarma.urlshortener.server.repository.ShortUrlAttributesRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 import com.mykaarma.urlshortener.server.util.UrlServiceUtil;
@@ -159,7 +160,7 @@ public class UrlService {
 
 		} while (!urlServiceUtil.isValid(hash));
 
-		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() + "/" + hash;
+		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() + "/"+RestURIConstants.REDIRECT +"/"+ hash;
 
 		log.info("Created  a new ShortUrl={} for longUrl={},businessId={}", shortUrl, longUrl, businessId);
 
@@ -187,11 +188,11 @@ public class UrlService {
 	 * @return String
 	 * @throws Exception
 	 */
-	public String findLongUrl(String scheme, String shortUrlDomain, String shortUrlHash) throws Exception {
-		String shortUrl = scheme + "://" + shortUrlDomain + "/" + shortUrlHash;
+	public String findLongUrl(String shortUrlHash) throws Exception {
+		
 
 		if (!urlServiceUtil.isValid(shortUrlHash)) {
-			log.info("Invalid Hash={} in ShortUrl={} ", hashCode(), shortUrl);
+			log.info("Invalid Hash={}  ", hashCode());
 			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
 		}
 
@@ -200,23 +201,18 @@ public class UrlService {
 		List<UrlAttributes> sameIdList = repository.findBySecondaryId(id);
 
 		if (sameIdList.isEmpty()) {
-			log.info("shortUrl={} is not present in DB ", shortUrl);
+			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
 			throw new NoSuchElementFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
 
 		}
 
 		if (sameIdList.get(0).getExpiryDateTime().before(new Date())) {
-			log.info("shortUrl={} is expired ", shortUrl);
+			log.info(" Short Url for shortUrlHash={} is expired ", shortUrlHash);
 
 			throw new NoSuchElementFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
 
 		}
-		if (!sameIdList.get(0).getShortUrl().equals(shortUrl)) {
-			log.info("shortUrl={} is not present in DB ", shortUrl);
-
-			throw new NoSuchElementFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
-
-		}
+		
 
 		// TODO INCREMENT COUNT OR NOT?
 
@@ -226,7 +222,7 @@ public class UrlService {
 
 		}
 
-		log.info("shortUrl= {} redirects to longUrl= {}", shortUrl, sameIdList.get(0).getLongUrl());
+		log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, sameIdList.get(0).getLongUrl());
 
 		return sameIdList.get(0).getLongUrl();
 
