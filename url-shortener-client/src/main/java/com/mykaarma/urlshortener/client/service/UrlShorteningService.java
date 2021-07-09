@@ -23,8 +23,8 @@ public interface UrlShorteningService {
 	@POST("/shorten")
 	Call< ShortenUrlResponseDTO> shortenUrl(@Body ShortenUrlRequestDTO longUrlDto);
 	
-	@HTTP(method="GET",path = "/redirect/{scheme}://{shortUrlDomain}/{shortUrlHash}")
-	 Call<String> redirectToLongUrl( @Path("scheme") String scheme, @Path("shortUrlDomain") String shortUrlDomain,@Path("shortUrlHash")String shortUrlHash);
+	@HTTP(method="GET",path = "/redirect/{shortUrlHash}")
+	 Call<String> redirectToLongUrl( @Path("shortUrlHash")String shortUrlHash);
 	
 	
 	
