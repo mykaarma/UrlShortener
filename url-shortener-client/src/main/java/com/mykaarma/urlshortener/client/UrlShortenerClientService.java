@@ -114,9 +114,9 @@ public class UrlShortenerClientService {
 	 }
 	
 	
-	public String redirectToLongUrl(String scheme, String shortUrlDomain, String shortUrlHash)throws ResponseStatusException
+	public String redirectToLongUrl(String shortUrlHash)throws ResponseStatusException
 	{
-		Call<String> callResponse=urlShorteningService.redirectToLongUrl(scheme,shortUrlDomain,shortUrlHash);
+		Call<String> callResponse=urlShorteningService.redirectToLongUrl(shortUrlHash);
 		
 		 try {
 			 

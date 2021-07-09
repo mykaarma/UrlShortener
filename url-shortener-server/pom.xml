@@ -17,11 +17,11 @@
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		 <docker.image.prefix>578061096415.dkr.ecr.us-east-1.amazonaws.com</docker.image.prefix>
-		
-    <java.version>1.8</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+		<docker.image.prefix>578061096415.dkr.ecr.us-east-1.amazonaws.com</docker.image.prefix>
+
+		<java.version>1.8</java.version>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
 
 	</properties>
 	<dependencies>
@@ -45,12 +45,12 @@
 			<version>2.4.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-pool2 -->
-<dependency>
-    <groupId>org.apache.commons</groupId>
-    <artifactId>commons-pool2</artifactId>
-    <version>2.9.0</version>
-</dependency>
-		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.9.0</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>io.springfox</groupId>
@@ -64,17 +64,17 @@
 		</dependency>
 
 
-	
 
-		
+
+
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
-		
-		
-		
+
+
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -99,7 +99,7 @@
 			<artifactId>url-shortener-model</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-core</artifactId>
@@ -109,24 +109,26 @@
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
-		
+
 		<dependency>
-   <groupId>org.springframework.boot</groupId>
-   <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-<!-- Micormeter core dependecy  -->
-<dependency>
-   <groupId>io.micrometer</groupId>
-   <artifactId>micrometer-core</artifactId>
-</dependency>
-<!-- Micrometer Prometheus registry  -->
-<dependency>
-   <groupId>io.micrometer</groupId>
-   <artifactId>micrometer-registry-prometheus</artifactId>
-</dependency>
- 
-		
-		
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<!-- Micormeter core dependecy -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-core</artifactId>
+		</dependency>
+		<!-- Micrometer Prometheus registry -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>3.4.5</version>
+		</dependency>
 
 
 
@@ -134,16 +136,16 @@
 
 	<build>
 		<plugins>
-		<plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-		
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -162,16 +164,16 @@
 				<artifactId>docker-maven-plugin</artifactId>
 				<version>1.1.1</version>
 				<configuration>
-                    <imageName>${docker.image.prefix}/url-shortener-server</imageName>
-                    <dockerDirectory>src/main/docker</dockerDirectory>
-                    <resources>
-                        <resource>
-                            <targetPath>/</targetPath>
-                            <directory>${project.build.directory}</directory>
-                            <include>${project.build.finalName}.jar</include>
-                        </resource>
-                    </resources>
-                </configuration>
+					<imageName>${docker.image.prefix}/url-shortener-server</imageName>
+					<dockerDirectory>src/main/docker</dockerDirectory>
+					<resources>
+						<resource>
+							<targetPath>/</targetPath>
+							<directory>${project.build.directory}</directory>
+							<include>${project.build.finalName}.jar</include>
+						</resource>
+					</resources>
+				</configuration>
 			</plugin>
 
 		</plugins>
