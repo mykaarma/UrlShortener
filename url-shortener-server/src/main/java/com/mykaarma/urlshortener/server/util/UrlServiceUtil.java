@@ -90,20 +90,23 @@ public class UrlServiceUtil {
 	}
 	
 	
-	
-	
-	
+	public int getRandomNumber(int min, int max) {
+	    return (int) ((Math.random() * (max - min)) + min);
+	}
+
 	
 	/**
 	 * @return A randomly Generated Long Number
 	 */
 	public long getRandomId()
 	{
+		long min=20000000;
+		long max=Long.MAX_VALUE;
 		long id;
-		Random random=new Random();
+		
 		do {
 			
-			id=random.nextLong();
+			id=(long)((Math.random() * (max - min)) + min);
 			if(id<0) {id*=-1;}
 			
 			
