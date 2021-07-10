@@ -9,7 +9,7 @@ spring:
         min-idle: 5
         max-wait: -1ms
       shutdown-timeout: 100ms
-    host: ${URL_SHORTENER_REDIS_HOSTT}
+    host: ${URL_SHORTENER_REDIS_HOST}
     password: ${URL_SHORTENER_REDIS_PASSWORD}
     port: ${URL_SHORTENER_REDIS_PORT}
     ssl: false
