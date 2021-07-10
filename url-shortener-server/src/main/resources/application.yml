@@ -10,7 +10,7 @@ spring:
         max-wait: -1ms
       shutdown-timeout: 100ms
     host: ${URL_SHORTENER_REDIS_HOST}
-    password: ${URL_SHORTENER_REDIS_PASSWORD}
+    password: $12E45
     port: ${URL_SHORTENER_REDIS_PORT}
     ssl: false
     timeout: 5000ms
