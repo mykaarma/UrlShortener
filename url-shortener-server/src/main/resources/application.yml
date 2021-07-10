@@ -9,17 +9,12 @@ spring:
         min-idle: 5
         max-wait: -1ms
       shutdown-timeout: 100ms
-    host: redis
-    password: p@ss$12E45
-    port: 6379
+    host: ${URL_SHORTENER_REDIS_HOSTT}
+    password: ${URL_SHORTENER_REDIS_PASSWORD}
+    port: ${URL_SHORTENER_REDIS_PORT}
     ssl: false
     timeout: 5000ms
   cache:
     type: redis
-  jpa:
-    open-in-view: true
-    
-    
-    
 
     

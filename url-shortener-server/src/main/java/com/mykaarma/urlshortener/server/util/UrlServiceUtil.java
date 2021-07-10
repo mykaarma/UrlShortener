@@ -7,12 +7,15 @@ import java.util.Random;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 
 import com.mykaarma.urlshortener.model.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.model.exception.InternalServerException;
+import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
+import com.mykaarma.urlshortener.model.redis.UrlDetails;
+import com.mykaarma.urlshortener.server.repository.UrlDetailsRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 
 import io.micrometer.core.instrument.util.IOUtils;
@@ -22,11 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 public class UrlServiceUtil {
 	@Autowired
 	public UrlRepository repository;
-	 
+	
+	@Autowired
+	public UrlDetailsRepository urlDetailsRepository;
+	
 	String ramdomAlphabet="Mheo9PI2qNs5Zpf80TBn7lmRbtQ4YKXHvwAEWxuzdra316OJigGLSVUCyFjkDc+-";
 	private static final String BLACK_LISTED_WORDS_FILE_URL = "https://static.mykaarma.dev/blacklisted-words.txt";
 	private static String[] blackListedWords = null;
-	
+
 	/**
 	 * @param longURL
 	 * @return Whether the Url is Valid or Not (boolean)
@@ -90,9 +96,77 @@ public class UrlServiceUtil {
 	}
 	
 	
-	public int getRandomNumber(int min, int max) {
-	    return (int) ((Math.random() * (max - min)) + min);
+	public long getRandomNumber(long min, long  max) {
+	    return (long) ((Math.random() * (max - min)) + min);
 	}
+	
+	public long  findExpiryDurationInSeconds(String expiryDuration)
+	{
+		
+		int i=0;
+		int count=0;
+		
+		long durationInSeconds=0;
+        
+		while(i<expiryDuration.length())
+		{
+			
+			
+			int j=i;
+			while(j<expiryDuration.length()&&expiryDuration.charAt(j)!=':')
+			{
+				
+				j++;
+			}
+			
+			
+			String currentDuration=expiryDuration.substring(i,j);
+			
+			
+			
+			int duration=Integer.parseInt(currentDuration);
+			
+			
+			
+	        if(count==0)
+	        {
+	        	durationInSeconds+=duration*12*30*24*60*60;
+	        	
+	        }
+	        else if(count==1)
+	        {
+	        	durationInSeconds+=duration*30*24*60*60;
+	        }
+	        else if(count==2)
+	        {
+	        	durationInSeconds+=duration*24*60*60;
+	        }
+	        else if(count==3)
+	        {
+	        	durationInSeconds+=duration*60*60;
+	        }
+	        else if(count==4)
+	        {
+	        	durationInSeconds+=duration*60;
+	        }
+	        else
+	        {
+	        	durationInSeconds+=duration;
+	        	
+	        }
+	        i=j+1;
+	      
+	        
+	        count++;
+		
+	}
+		return durationInSeconds;
+		
+		
+	
+	}
+	
+	
 
 	
 	/**
@@ -308,6 +382,28 @@ public class UrlServiceUtil {
 				}
 			}
 		}
+		
+	}
+	
+	@Async
+	public void incrementClickCount(UrlDetails urlDetails)
+	{
+		long id =urlDetails.getSecondaryId();
+		
+	List<UrlAttributes>sameUrlAttributes =repository.findBySecondaryId(id);
+	
+	if(sameUrlAttributes!=null&&!sameUrlAttributes.isEmpty())
+	{
+		
+		sameUrlAttributes.get(0).incrementClickCount();
+		repository.save(sameUrlAttributes.get(0));
+	}
+	
+	urlDetails.incrementClickCount();
+	
+	urlDetailsRepository.save(urlDetails);
+	return ;
+		
 		
 	}
 	

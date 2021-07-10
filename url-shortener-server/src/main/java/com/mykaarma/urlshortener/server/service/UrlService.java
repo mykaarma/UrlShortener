@@ -23,8 +23,10 @@ import com.mykaarma.urlshortener.model.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
+import com.mykaarma.urlshortener.model.redis.UrlDetails;
 import com.mykaarma.urlshortener.model.utils.RestURIConstants;
 import com.mykaarma.urlshortener.server.repository.ShortUrlAttributesRepository;
+import com.mykaarma.urlshortener.server.repository.UrlDetailsRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 import com.mykaarma.urlshortener.server.util.UrlServiceUtil;
 
@@ -38,6 +40,7 @@ public class UrlService {
 	private CacheService cacheService;
 	private UrlRepository repository;
 	ShortUrlAttributesRepository shortUrlAttributesRepository;
+	private UrlDetailsRepository urlDetailsRepository ;
 
 	 @Value("${service_analytic_id}")
 	private String serviceAnalyticId ;
@@ -48,12 +51,13 @@ public class UrlService {
 
 	@Autowired
 	public UrlService(UrlServiceUtil urlServiceUtil, UrlRepository repository,
-			ShortUrlAttributesRepository shortUrlAttributesRepository, CacheService cacheService) {
+			ShortUrlAttributesRepository shortUrlAttributesRepository, CacheService cacheService, UrlDetailsRepository urlDetailsRepository ) {
 		super();
 		this.urlServiceUtil = urlServiceUtil;
 		this.repository = repository;
 		this.shortUrlAttributesRepository = shortUrlAttributesRepository;
 		this.cacheService = cacheService;
+		this.urlDetailsRepository=urlDetailsRepository;
 	}
 
 	/**
@@ -86,53 +90,71 @@ public class UrlService {
 			throw new BadShorteningRequestException(UrlErrorCodes.BAD_REQUEST);
 
 		}
+		long expiryDurationInSeconds=urlServiceUtil.findExpiryDurationInSeconds(expiryDuration);
 		Date expiryDate = urlServiceUtil.findExpiryDate(getShortUrlRequestDTO.getExpiryDuration());
-
-		List<UrlAttributes> sameLongUrlList = repository.findByLongUrl(getShortUrlRequestDTO.getLongUrl());
+			///take from redis
+		List<UrlDetails> sameLongUrlList = urlDetailsRepository.findByLongUrl(longUrl);
 
 		if (sameLongUrlList.isEmpty()) {
-			return createNewUrlEntity(getShortUrlRequestDTO, expiryDate);
+			return createNewUrlEntity(getShortUrlRequestDTO, expiryDate,expiryDurationInSeconds);
 		}
-		UrlAttributes sameUrlEntity = sameLongUrlList.get(0);
-		if (expiryDate.before(new Date())) {
-			log.error(" shortUrl for LongUrl={} is Expired for businessId={} ", longUrl, businessId);
-
-			return createNewUrlEntity(getShortUrlRequestDTO, expiryDate);
-		}
-		if (expiryDate.after(sameUrlEntity.getExpiryDateTime())) {
+		UrlDetails sameUrlDetail = sameLongUrlList.get(0);
+		
+		
+		if (expiryDate.after(sameUrlDetail.getExpiryDateTime())) {
 
 			log.info("Short Url={} already present for longUrl={}", sameLongUrlList.get(0).getShortUrl(), longUrl);
-			sameUrlEntity.setExpiryDateTime(expiryDate);
-
-			cacheService.purgeUrlCache(sameUrlEntity.getSecondaryId());
-			if (getShortUrlRequestDTO.getBusinessId() != null) {
-				sameUrlEntity.setBusinessId(getShortUrlRequestDTO.getBusinessId());
+			sameUrlDetail.setExpiryDateTime(expiryDate);
+			
+			sameUrlDetail.setExpiryDuration(expiryDurationInSeconds);
+			sameUrlDetail.setBusinessId(businessId);
+			
+			List<UrlAttributes> urlAttributes= repository.findBySecondaryId(sameUrlDetail.getSecondaryId());
+			
+			UrlAttributes sameUrlAttribute=urlAttributes.get(0);
+			
+			sameUrlAttribute.setExpiryDateTime(expiryDate);
+			sameUrlAttribute.setBusinessId(businessId);
+			
+			
+			
+			if(sameUrlAttribute.isTrackingEnabled())
+			{
+				List<ShortUrlAttributes> shortUrlAttributes=shortUrlAttributesRepository.findById(sameUrlDetail.getSecondaryId());
+				
+				if(shortUrlAttributes!=null&&!shortUrlAttributes.isEmpty())
+				{
+					shortUrlAttributes.get(0).setTtl(expiryDate);
+					shortUrlAttributesRepository.save(shortUrlAttributes.get(0));
+					
+				}
+				
 			}
+			
 
 			log.info("Extending the Expiry Date of shortUrl={} for longUrl ={} on request of BusinessId={}",
-					sameUrlEntity.getShortUrl(), longUrl, sameUrlEntity.getBusinessId());
+					sameUrlAttribute.getShortUrl(), longUrl, sameUrlAttribute.getBusinessId());
+			
+			
+			
+		
+			
+			
 
-			repository.save(sameUrlEntity);
+			urlDetailsRepository.save(sameUrlDetail);
+			repository.save(sameUrlAttribute);
+			
+		}
+		
+		
+
+	
+		if (getShortUrlRequestDTO.isTrackingEnabled()&&!sameUrlDetail.isTrackingEnabled()) {
+			
+			enableTracking(getShortUrlRequestDTO, sameUrlDetail.getSecondaryId(), sameUrlDetail.getShortUrl());
 		}
 
-		List<ShortUrlAttributes> shortUrlAttributesList = shortUrlAttributesRepository
-				.findById(sameLongUrlList.get(0).getSecondaryId());
-
-		if (shortUrlAttributesList != null && !shortUrlAttributesList.isEmpty()) {
-			if (sameUrlEntity.getExpiryDateTime() != shortUrlAttributesList.get(0).getTtl()) {
-				log.info(
-						"Extending the Expiry Date of shortUrl={} for longUrl ={}  in ShortUrlAttributes on request of BusinessId={}",
-						sameUrlEntity.getShortUrl(), longUrl, sameUrlEntity.getBusinessId());
-
-				shortUrlAttributesList.get(0).setTtl(sameUrlEntity.getExpiryDateTime());
-				shortUrlAttributesRepository.save(shortUrlAttributesList.get(0));
-			}
-
-		} else if (getShortUrlRequestDTO.isTrackingEnabled()) {
-			enableTracking(getShortUrlRequestDTO, sameUrlEntity.getSecondaryId(), sameUrlEntity.getShortUrl());
-		}
-
-		return new ShortenUrlResponseDTO(sameUrlEntity.getShortUrl());
+		return new ShortenUrlResponseDTO(sameUrlDetail.getShortUrl());
 
 	}
 
@@ -145,7 +167,7 @@ public class UrlService {
 	 * 
 	 * @return ShortenUrlResponseDTO
 	 */
-	public ShortenUrlResponseDTO createNewUrlEntity(ShortenUrlRequestDTO getShortUrlRequestDTO, Date expiryDate) {
+	public ShortenUrlResponseDTO createNewUrlEntity(ShortenUrlRequestDTO getShortUrlRequestDTO, Date expiryDate,long  expiryDurationInSeconds) {
 
 		String businessId = getShortUrlRequestDTO.getBusinessId();
 		String longUrl = getShortUrlRequestDTO.getLongUrl();
@@ -164,10 +186,17 @@ public class UrlService {
 
 		log.info("Created  a new ShortUrl={} for longUrl={},businessId={}", shortUrl, longUrl, businessId);
 
-		UrlAttributes urlEntity = new UrlAttributes(id, getShortUrlRequestDTO.getLongUrl(), shortUrl, new Date(),
-				expiryDate, 0L, getShortUrlRequestDTO.getBusinessId());
+		
+		
+		UrlAttributes urlAttribute = new UrlAttributes(id, getShortUrlRequestDTO.getLongUrl(), shortUrl, new Date(),
+				expiryDate, 0L, getShortUrlRequestDTO.getBusinessId(),getShortUrlRequestDTO.isTrackingEnabled());
 
-		repository.save(urlEntity);
+		repository.save(urlAttribute);
+		
+		UrlDetails urlDetails=new UrlDetails(id, getShortUrlRequestDTO.getLongUrl(), shortUrl,	expiryDurationInSeconds,expiryDate, 0L, getShortUrlRequestDTO.getBusinessId(),getShortUrlRequestDTO.isTrackingEnabled());
+		
+		
+		urlDetailsRepository.save(urlDetails);
 
 		if (getShortUrlRequestDTO.isTrackingEnabled()) {
 			enableTracking(getShortUrlRequestDTO, id, shortUrl);
@@ -198,7 +227,7 @@ public class UrlService {
 
 		long id = urlServiceUtil.convertHashToId(shortUrlHash);
 
-		List<UrlAttributes> sameIdList = repository.findBySecondaryId(id);
+		List<UrlDetails> sameIdList = urlDetailsRepository.findBySecondaryId(id);
 
 		if (sameIdList.isEmpty()) {
 			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
@@ -213,8 +242,16 @@ public class UrlService {
 
 		}
 		
+		urlServiceUtil.incrementClickCount(sameIdList.get(0));
+		
 
 		// TODO INCREMENT COUNT OR NOT?
+		
+		if(!sameIdList.get(0).isTrackingEnabled()) {
+			log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, sameIdList.get(0).getLongUrl());
+
+			return sameIdList.get(0).getLongUrl();
+		}
 
 		List<ShortUrlAttributes> shortUrlAttributesList = shortUrlAttributesRepository.findById(id);
 		if (shortUrlAttributesList != null && !shortUrlAttributesList.isEmpty()) {

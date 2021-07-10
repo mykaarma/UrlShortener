@@ -7,13 +7,11 @@ import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfigurat
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
-
-
-
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.boot.SpringApplication;
 
 @SpringBootApplication
-@EnableCaching
+@EnableRedisRepositories
 @EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class})
 public class UrlShortenerServer {
 	public static void main(String[] args)  {
