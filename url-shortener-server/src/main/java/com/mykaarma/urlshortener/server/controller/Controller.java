@@ -80,7 +80,7 @@ public class Controller {
 		longUrl = urlService.findLongUrl( shortUrlHash);
 
 		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(longUrl);
-
+		
 		try {
 			return new ResponseEntity<>(htmlResponse, HttpStatus.PERMANENT_REDIRECT);
 		} catch (Exception e) {
@@ -90,6 +90,35 @@ public class Controller {
 					+ " target=\"_blank\">Click Here To redirect to The Link!</a>";
 			return new ResponseEntity<>(redirectFailureResponse, HttpStatus.OK);
 		}
+	}
+	
+	
+	@ApiOperation(value = "Returns the Number of Times ShortUrl has been clicked", authorizations = {@Authorization(value = "basicAuth")})
+	@GetMapping("/"+ RestURIConstants.COUNT_CLICKS  +"/"+RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE)
+	public ResponseEntity< GetShortUrlClickCountResponseDTO> countClicks(@PathVariable(value="shortUrlHash") String shortUrlHash)
+	{
+		ResponseEntity< GetShortUrlClickCountResponseDTO> response=null;
+		long shortUrlClickCount=0L;
+		
+		try {
+			
+		 shortUrlClickCount=urlService.findClickCounts(shortUrlHash);
+		}
+		catch( Exception e)
+		{
+			GetShortUrlClickCountResponseDTO getShortUrlClickCountResponseDTO=new  GetShortUrlClickCountResponseDTO();
+		       List<ApiError> errors = new ArrayList<ApiError>();
+		       errors.add( new ApiError( UrlErrorCodes.INTERNAL_SERVER_ERROR));
+		       getShortUrlClickCountResponseDTO.setErrors(errors);
+		       response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(getShortUrlClickCountResponseDTO);
+		       
+		       return response;
+			
+		}
+		 response = ResponseEntity.status(HttpStatus.OK).body(new GetShortUrlClickCountResponseDTO(shortUrlClickCount));
+		return response;
+		
+	
 	}
 
 	

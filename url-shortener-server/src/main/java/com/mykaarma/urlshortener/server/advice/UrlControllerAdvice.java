@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpServerErrorException.InternalServerError;
 
-
+import com.mykaarma.urlshortener.model.exception.BadClickCountRequestException;
 import com.mykaarma.urlshortener.model.exception.BadRedirectingRequestException;
 import com.mykaarma.urlshortener.model.exception.BadShorteningRequestException;
+import com.mykaarma.urlshortener.model.exception.NoShortUrlForClickCountRequestException;
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.ApiError;
+import com.mykaarma.urlshortener.model.dto.response.GetShortUrlClickCountResponseDTO;
 import com.mykaarma.urlshortener.model.dto.response.ShortenUrlResponseDTO;
 import com.mykaarma.urlshortener.model.enums.UrlErrorCodes;
 
@@ -53,6 +55,36 @@ public class UrlControllerAdvice {
 		
 		
 		return new ResponseEntity<>(shortenUrlResponseDTO,HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(BadClickCountRequestException.class)
+	public ResponseEntity<GetShortUrlClickCountResponseDTO>handleBadClickCountRequest(BadClickCountRequestException badClickCountRequestException)
+	{
+		GetShortUrlClickCountResponseDTO getShortUrlClickCountResponseDTO =new GetShortUrlClickCountResponseDTO();
+		
+		List<ApiError>apiErrors =new ArrayList<>() ;
+		ApiError apiError=new ApiError(UrlErrorCodes.BAD_REQUEST);
+		apiErrors.add(apiError);
+		getShortUrlClickCountResponseDTO.setErrors(apiErrors);
+		
+		
+		
+		return new ResponseEntity<>(getShortUrlClickCountResponseDTO,HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(NoShortUrlForClickCountRequestException.class)
+	public ResponseEntity<GetShortUrlClickCountResponseDTO>handleNoShortUrlForClickCountRequest(NoShortUrlForClickCountRequestException noShortUrlForClickCountRequestException)
+	{
+		GetShortUrlClickCountResponseDTO getShortUrlClickCountResponseDTO =new GetShortUrlClickCountResponseDTO();
+		
+		List<ApiError>apiErrors =new ArrayList<>() ;
+		ApiError apiError=new ApiError(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+		apiErrors.add(apiError);
+		getShortUrlClickCountResponseDTO.setErrors(apiErrors);
+		
+		
+		
+		return new ResponseEntity<>(getShortUrlClickCountResponseDTO,HttpStatus.NOT_FOUND);
 	}
 	
 	

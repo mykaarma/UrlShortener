@@ -132,6 +132,29 @@ public class UrlShortenerClientService {
 		 }
 	}
 	
+	public GetShortUrlClickCountResponseDTO countClicks( String shortUrlHash) 
+	{
+		 try {
+			 Response< GetShortUrlClickCountResponseDTO> resp = urlShorteningService.countClicks(shortUrlHash).execute();
+		    return resp.body();
+		    }
+		 catch (Exception ex) {
+			 GetShortUrlClickCountResponseDTO getShortUrlClickCountResponseDTO=new GetShortUrlClickCountResponseDTO();
+			 
+			 ApiError apiError=new ApiError(UrlErrorCodes.INTERNAL_SERVER_ERROR);
+			 List<ApiError> errors = new ArrayList<ApiError>();
+			errors.add(apiError);
+			getShortUrlClickCountResponseDTO.setErrors(errors);
+			return getShortUrlClickCountResponseDTO;
+			  
+			  }
+		 
+		
+		
+		
+	}
+	
+	
 	
 	
 	

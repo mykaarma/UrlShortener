@@ -245,7 +245,7 @@ public class UrlService {
 		urlServiceUtil.incrementClickCount(sameIdList.get(0));
 		
 
-		// TODO INCREMENT COUNT OR NOT?
+
 		
 		if(!sameIdList.get(0).isTrackingEnabled()) {
 			log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, sameIdList.get(0).getLongUrl());
@@ -485,5 +485,58 @@ public class UrlService {
 		}
 		return logline;
 	}
+	
+	
+	 /**
+		 * @param scheme
+		 * @param shortUrlDomain
+		 * @param shorturlHash
+		 * @return clickCount (long)
+		 * @throws Exception
+		 */
+		public long findClickCounts(String shorturlHash) throws Exception
+		 {
+			 
+			boolean isShortUrlHashValid=true;
+		
+			 isShortUrlHashValid=urlServiceUtil.isValid(shorturlHash);
+			 
+			
+			 
+			 if(!isShortUrlHashValid)
+			 {
+				 log.info("shortUrl hash={} is invalid",shorturlHash);
+				 
+				 throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
+				 
+			 }
+			 
+			 
+			 
+			 long id=urlServiceUtil.convertHashToId(shorturlHash);
+			
+			 List<UrlDetails>sameIdList=urlDetailsRepository.findBySecondaryId(id);
+			 
+			 if(sameIdList.isEmpty())
+			 {
+				 
+				 log.info("shortUrl hash={} is not Found",shorturlHash);
+				 throw new NoSuchElementFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+				 
+			 }
+			 
+			
+			 log.info("Click Count for shortUrl with hash={} is {}",shorturlHash,sameIdList.get(0).getClickCount());
+			 return sameIdList.get(0).getClickCount();
+			 
+			 
+			 
+			 
+			 
+		 }
+	
+	
+	
+	
 
 }

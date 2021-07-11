@@ -1,6 +1,7 @@
 package com.mykaarma.urlshortener.server.util;
 
 import java.net.URL;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.Random;
 
@@ -32,6 +33,7 @@ public class UrlServiceUtil {
 	String ramdomAlphabet="Mheo9PI2qNs5Zpf80TBn7lmRbtQ4YKXHvwAEWxuzdra316OJigGLSVUCyFjkDc+-";
 	private static final String BLACK_LISTED_WORDS_FILE_URL = "https://static.mykaarma.dev/blacklisted-words.txt";
 	private static String[] blackListedWords = null;
+	SecureRandom sr = new SecureRandom();
 
 	/**
 	 * @param longURL
@@ -96,9 +98,7 @@ public class UrlServiceUtil {
 	}
 	
 	
-	public long getRandomNumber(long min, long  max) {
-	    return (long) ((Math.random() * (max - min)) + min);
-	}
+	
 	
 	public long  findExpiryDurationInSeconds(String expiryDuration)
 	{
@@ -177,10 +177,10 @@ public class UrlServiceUtil {
 		long min=20000000;
 		long max=Long.MAX_VALUE;
 		long id;
-		
+		 long randomLong = sr.nextLong();
 		do {
 			
-			id=(long)((Math.random() * (max - min)) + min);
+			id=(long)((((double)randomLong/max)* (max - min)) + min);
 			if(id<0) {id*=-1;}
 			
 			
