@@ -18,8 +18,10 @@ import com.mykaarma.googleanalytics.GoogleAnalytics;
 import com.mykaarma.urlshortener.model.dto.request.ShortenUrlRequestDTO;
 import com.mykaarma.urlshortener.model.dto.response.ShortenUrlResponseDTO;
 import com.mykaarma.urlshortener.model.enums.UrlErrorCodes;
+import com.mykaarma.urlshortener.model.exception.BadClickCountRequestException;
 import com.mykaarma.urlshortener.model.exception.BadRedirectingRequestException;
 import com.mykaarma.urlshortener.model.exception.BadShorteningRequestException;
+import com.mykaarma.urlshortener.model.exception.NoShortUrlForClickCountRequestException;
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
@@ -507,7 +509,7 @@ public class UrlService {
 			 {
 				 log.info("shortUrl hash={} is invalid",shorturlHash);
 				 
-				 throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
+				 throw new BadClickCountRequestException(UrlErrorCodes.INVALID_SHORT_URL);
 				 
 			 }
 			 
@@ -521,7 +523,7 @@ public class UrlService {
 			 {
 				 
 				 log.info("shortUrl hash={} is not Found",shorturlHash);
-				 throw new NoSuchElementFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+				 throw new NoShortUrlForClickCountRequestException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
 				 
 			 }
 			 

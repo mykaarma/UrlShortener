@@ -73,7 +73,7 @@ public class SwaggerConfig {
      */
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder().title("url shortener API ").description("The URL SHORTENER " +
-                "API is a RESTful API which provides several URL shortening and redirect Method.")
+                "API is a RESTful API which provides  URL shortening,redirecting and Tracking Methods.")
                 .contact(new Contact("myKaarma Support", "https://mykaarma.com",
                         "api-support@mykaarma.com")).version("1.0").build();
     }

@@ -95,7 +95,7 @@ public class Controller {
 	
 	@ApiOperation(value = "Returns the Number of Times ShortUrl has been clicked", authorizations = {@Authorization(value = "basicAuth")})
 	@GetMapping("/"+ RestURIConstants.COUNT_CLICKS  +"/"+RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE)
-	public ResponseEntity< GetShortUrlClickCountResponseDTO> countClicks(@PathVariable(value="shortUrlHash") String shortUrlHash)
+	public ResponseEntity< GetShortUrlClickCountResponseDTO> countClicks(@PathVariable(value="shortUrlHash") String shortUrlHash) throws Exception
 	{
 		ResponseEntity< GetShortUrlClickCountResponseDTO> response=null;
 		long shortUrlClickCount=0L;
