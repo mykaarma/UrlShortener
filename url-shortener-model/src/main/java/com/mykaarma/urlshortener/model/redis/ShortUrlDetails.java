@@ -12,9 +12,11 @@ import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @RedisHash("short-url-details")
 public class ShortUrlDetails implements Serializable{
 	
@@ -42,6 +44,7 @@ public class ShortUrlDetails implements Serializable{
 		this.eventAction=shortUrlAttributes.getEventAction();
 		this.eventValue=shortUrlAttributes.getEventValue();
 		this.additionalParamsJson=shortUrlAttributes.getAdditionalParamsJson();
+		this.ttl=shortUrlAttributes.getTtl();
 		this.expiryDuration=expiryDuration;
 		
 		

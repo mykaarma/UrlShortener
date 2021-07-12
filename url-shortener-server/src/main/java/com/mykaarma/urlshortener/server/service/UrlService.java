@@ -330,10 +330,10 @@ public class UrlService {
 			shortUrlWithoutDomain = shortUrlWithoutDomain.substring(index + 1);
 		}
 
-		List<ShortUrlAttributes> shortUrlAttributesList = shortUrlAttributesRepository.findById(id);
+		Optional<ShortUrlDetails> shortUrlDetails = shortUrlDetailsRepository.findById(id);
 
-		if (shortUrlAttributesList != null && !shortUrlAttributesList.isEmpty()) {
-			shortUrlAttributes = shortUrlAttributesList.get(0);
+		if (shortUrlDetails != null && shortUrlDetails.isPresent()) {
+			shortUrlAttributes = new ShortUrlAttributes(shortUrlDetails.get());
 		}
 
 		if (eventCategory == null || eventCategory.isEmpty() || eventAction == null || eventAction.trim().isEmpty()) {
@@ -366,9 +366,9 @@ public class UrlService {
 		if (shortUrlAttributes != null) {
 			shortUrlAttributes.setShortUrl(shortUrlWithoutDomain);
 			
-			ShortUrlDetails shortUrlDetails=new ShortUrlDetails(shortUrlAttributes,urlServiceUtil.findExpiryDurationInSeconds(expiryDuration));
+			ShortUrlDetails shortUrlDetail=new ShortUrlDetails(shortUrlAttributes,urlServiceUtil.findExpiryDurationInSeconds(expiryDuration));
 			
-			shortUrlDetailsRepository.save(shortUrlDetails);
+			shortUrlDetailsRepository.save(shortUrlDetail);
 			shortUrlAttributesRepository.save(shortUrlAttributes);
 		}
 

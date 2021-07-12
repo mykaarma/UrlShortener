@@ -9,7 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import com.mykaarma.urlshortener.model.redis.ShortUrlDetails;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,5 +33,21 @@ public class ShortUrlAttributes implements Serializable {
 	private Long eventValue;
 	private String additionalParamsJson;
 	private Date ttl;
+	
+	public ShortUrlAttributes(ShortUrlDetails shortUrlDetails)
+	{
+		this.id=shortUrlDetails.getId();
+		this.version=shortUrlDetails.getVersion();
+		this.shortUrl=shortUrlDetails.getShortUrl();
+		this.eventCategory=shortUrlDetails.getEventCategory();
+		this.eventLabel=shortUrlDetails.getEventLabel();
+		this.eventAction=shortUrlDetails.getEventAction();
+		this.eventValue=shortUrlDetails.getEventValue();
+		this.ttl=shortUrlDetails.getTtl();
+		this.additionalParamsJson=shortUrlDetails.getAdditionalParamsJson();
+		
+		
+		
+	}
 
 }
