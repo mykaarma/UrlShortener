@@ -30,7 +30,7 @@ public class UrlServiceTests {
 	 {
 		 ShortenUrlRequestDTO shortenUrlRequestDTO= new ShortenUrlRequestDTO();
 		 shortenUrlRequestDTO.setBusinessId("xxnsi11kdek233d");
-		 shortenUrlRequestDTO.setLongUrl("https://www.google.com");
+		 shortenUrlRequestDTO.setLongUrl("https://www.testApp.com");
 		 shortenUrlRequestDTO.setShortUrlDomain("https://www.app.mykaarma.com");
 		 shortenUrlRequestDTO.setExpiryDuration("1:3:2:11:0:3");
 		 shortenUrlRequestDTO.setTrackingEnabled(false);

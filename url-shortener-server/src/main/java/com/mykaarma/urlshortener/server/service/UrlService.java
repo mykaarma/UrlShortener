@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,9 +26,11 @@ import com.mykaarma.urlshortener.model.exception.NoShortUrlForClickCountRequestE
 import com.mykaarma.urlshortener.model.exception.NoSuchElementFoundException;
 import com.mykaarma.urlshortener.model.jpa.ShortUrlAttributes;
 import com.mykaarma.urlshortener.model.jpa.UrlAttributes;
+import com.mykaarma.urlshortener.model.redis.ShortUrlDetails;
 import com.mykaarma.urlshortener.model.redis.UrlDetails;
 import com.mykaarma.urlshortener.model.utils.RestURIConstants;
 import com.mykaarma.urlshortener.server.repository.ShortUrlAttributesRepository;
+import com.mykaarma.urlshortener.server.repository.ShortUrlDetailsRepository;
 import com.mykaarma.urlshortener.server.repository.UrlDetailsRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 import com.mykaarma.urlshortener.server.util.UrlServiceUtil;
@@ -39,10 +42,11 @@ import lombok.extern.slf4j.Slf4j;
 public class UrlService {
 
 	private UrlServiceUtil urlServiceUtil;
-	private CacheService cacheService;
 	private UrlRepository repository;
-	ShortUrlAttributesRepository shortUrlAttributesRepository;
+	private ShortUrlAttributesRepository shortUrlAttributesRepository;
 	private UrlDetailsRepository urlDetailsRepository ;
+	private ShortUrlDetailsRepository shortUrlDetailsRepository;
+	
 
 	 @Value("${service_analytic_id}")
 	private String serviceAnalyticId ;
@@ -53,13 +57,14 @@ public class UrlService {
 
 	@Autowired
 	public UrlService(UrlServiceUtil urlServiceUtil, UrlRepository repository,
-			ShortUrlAttributesRepository shortUrlAttributesRepository, CacheService cacheService, UrlDetailsRepository urlDetailsRepository ) {
+			ShortUrlAttributesRepository shortUrlAttributesRepository, UrlDetailsRepository urlDetailsRepository,ShortUrlDetailsRepository shortUrlDetailsRepository ) {
 		super();
 		this.urlServiceUtil = urlServiceUtil;
 		this.repository = repository;
 		this.shortUrlAttributesRepository = shortUrlAttributesRepository;
-		this.cacheService = cacheService;
+		
 		this.urlDetailsRepository=urlDetailsRepository;
+		this.shortUrlDetailsRepository=shortUrlDetailsRepository;
 	}
 
 	/**
@@ -122,12 +127,24 @@ public class UrlService {
 			
 			if(sameUrlAttribute.isTrackingEnabled())
 			{
-				List<ShortUrlAttributes> shortUrlAttributes=shortUrlAttributesRepository.findById(sameUrlDetail.getSecondaryId());
+		Optional<ShortUrlDetails> shortUrlDetails=shortUrlDetailsRepository.findById(sameUrlDetail.getSecondaryId());
 				
-				if(shortUrlAttributes!=null&&!shortUrlAttributes.isEmpty())
+				if(shortUrlDetails!=null&&shortUrlDetails.isPresent())
 				{
-					shortUrlAttributes.get(0).setTtl(expiryDate);
-					shortUrlAttributesRepository.save(shortUrlAttributes.get(0));
+					shortUrlDetails.get().setTtl(expiryDate);  
+					shortUrlDetails.get().setExpiryDuration(expiryDurationInSeconds);
+					
+					List<ShortUrlAttributes>shortUrlAttributes=shortUrlAttributesRepository.findById(sameUrlDetail.getSecondaryId());
+					
+					if(shortUrlAttributes!=null&&!shortUrlAttributes.isEmpty())
+					{
+						shortUrlAttributes.get(0).setTtl(expiryDate);
+						
+						shortUrlAttributesRepository.save(shortUrlAttributes.get(0));
+					}
+					
+					
+					shortUrlDetailsRepository.save(shortUrlDetails.get());
 					
 				}
 				
@@ -255,9 +272,9 @@ public class UrlService {
 			return sameIdList.get(0).getLongUrl();
 		}
 
-		List<ShortUrlAttributes> shortUrlAttributesList = shortUrlAttributesRepository.findById(id);
-		if (shortUrlAttributesList != null && !shortUrlAttributesList.isEmpty()) {
-			trackShortUrl(shortUrlAttributesList.get(0), new Date());
+		Optional<ShortUrlDetails> shortUrlDetails = shortUrlDetailsRepository.findById(id);
+		if (shortUrlDetails != null && shortUrlDetails.isPresent()) {
+			trackShortUrl(shortUrlDetails.get(), new Date());
 
 		}
 
@@ -304,6 +321,7 @@ public class UrlService {
 		long eventValue = shortenUrlRequestDTO.getEventValue();
 		Map<String, String> additionalParams = shortenUrlRequestDTO.getAdditionalParams();
 
+		Date expiryDate=urlServiceUtil.findExpiryDate(expiryDuration);
 		ShortUrlAttributes shortUrlAttributes = null;
 
 		String shortUrlWithoutDomain = shortUrl;
@@ -331,7 +349,7 @@ public class UrlService {
 			shortUrlAttributes.setEventAction(eventAction);
 			shortUrlAttributes.setEventLabel(eventLabel);
 			shortUrlAttributes.setEventValue(eventValue);
-			shortUrlAttributes.setTtl(urlServiceUtil.findExpiryDate(expiryDuration)); // setting it to current time
+			shortUrlAttributes.setTtl(expiryDate); // setting it to current time
 																						// PLUS url expiry duration
 
 			String additionalParamsJson = null;
@@ -347,6 +365,10 @@ public class UrlService {
 
 		if (shortUrlAttributes != null) {
 			shortUrlAttributes.setShortUrl(shortUrlWithoutDomain);
+			
+			ShortUrlDetails shortUrlDetails=new ShortUrlDetails(shortUrlAttributes,urlServiceUtil.findExpiryDurationInSeconds(expiryDuration));
+			
+			shortUrlDetailsRepository.save(shortUrlDetails);
 			shortUrlAttributesRepository.save(shortUrlAttributes);
 		}
 
@@ -408,15 +430,15 @@ public class UrlService {
 	 *
 	 * @param logTime
 	 */
-	public void trackShortUrl(ShortUrlAttributes shortUrlAttributes, Date logTime) {
+	public void trackShortUrl(ShortUrlDetails shortUrlDetails, Date logTime) {
 
-		String eventCategory = shortUrlAttributes.getEventCategory();
-		String eventAction = shortUrlAttributes.getEventAction();
-		String eventLabel = shortUrlAttributes.getEventLabel();
-		String shortUrl = shortUrlAttributes.getShortUrl();
+		String eventCategory = shortUrlDetails.getEventCategory();
+		String eventAction = shortUrlDetails.getEventAction();
+		String eventLabel = shortUrlDetails.getEventLabel();
+		String shortUrl = shortUrlDetails.getShortUrl();
 
-		Long eventValue = shortUrlAttributes.getEventValue();
-		Date ttl = shortUrlAttributes.getTtl();
+		Long eventValue = shortUrlDetails.getEventValue();
+		Date ttl = shortUrlDetails.getTtl();
 
 		log.info("short_url_extracted=\"" + shortUrl + "\"");
 
@@ -428,10 +450,10 @@ public class UrlService {
 			logline += postToGoogleAnalytics(eventAction, eventCategory, eventLabel, eventValue);
 
 			HashMap<String, String> additionalParams = null;
-			if (shortUrlAttributes.getAdditionalParamsJson() != null
-					&& !shortUrlAttributes.getAdditionalParamsJson().trim().isEmpty()) {
+			if (shortUrlDetails.getAdditionalParamsJson() != null
+					&& !shortUrlDetails.getAdditionalParamsJson().trim().isEmpty()) {
 				try {
-					additionalParams = new ObjectMapper().readValue(shortUrlAttributes.getAdditionalParamsJson(),
+					additionalParams = new ObjectMapper().readValue(shortUrlDetails.getAdditionalParamsJson(),
 							HashMap.class);
 				} catch (Exception e) {
 					additionalParams = null;
