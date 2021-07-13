@@ -70,9 +70,5 @@
 	</build>
 
 
-	<modules>
-		<module>url-shortener-client</module>
-		<module>url-shortener-server</module>
-		<module>url-shortener-model</module>
-	</modules>
+	
 </project>
