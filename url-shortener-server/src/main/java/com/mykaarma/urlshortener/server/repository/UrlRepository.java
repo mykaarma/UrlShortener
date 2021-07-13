@@ -17,14 +17,14 @@ import java.util.*;
 public interface UrlRepository extends MongoRepository<UrlAttributes,Long> {
 	
 		
-		@CacheEvict(value="URL",key="#id")
+	
 		public void deleteBySecondaryId(long id);
 		
 		
 		public List<UrlAttributes> findByLongUrl(String longUrl);
 	
 		
-		@Cacheable("URL")
+
 		public List<UrlAttributes> findBySecondaryId(long id);
 		
 		
