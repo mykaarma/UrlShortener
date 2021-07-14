@@ -1,18 +1,18 @@
 package com.mykaarma.urlshortener.server.config;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+
 
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 
 import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.BasicAuth;
+
 import springfox.documentation.service.Contact;
-import springfox.documentation.service.SecurityScheme;
+
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.ApiKeyVehicle;
@@ -24,12 +24,8 @@ import springfox.documentation.swagger.web.TagsSorter;
 import springfox.documentation.swagger.web.UiConfiguration;
 import springfox.documentation.swagger.web.UiConfigurationBuilder;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
-import java.util.Set;
-import com.fasterxml.classmate.TypeResolver;
+
 
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -38,8 +34,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
-	@Autowired
-	private TypeResolver typeResolver;
+
 	
 	
 	@Bean
@@ -103,21 +98,5 @@ public class SwaggerConfig {
         return new SecurityConfiguration(null, null, null, null, "Authorization", ApiKeyVehicle.HEADER, "Authorization", ",");
     }
 
-    /**
-     * List of security schemes supported i.e BasicAuth for mK
-     *
-     * @return SecuritySchemes
-     */
-    private List<SecurityScheme> defaultSecuritySchemes() {
-        List<SecurityScheme> schemeList = new ArrayList<>();
-        schemeList.add(new BasicAuth("basicAuth"));
-        return schemeList;
-    }
-
-    private Set<String> produces(){
-        Set<String> endPointProduces = new HashSet<>();
-        endPointProduces.add("APPLICATION_JSON");
-        return endPointProduces;
-    }
-
+ 
 }

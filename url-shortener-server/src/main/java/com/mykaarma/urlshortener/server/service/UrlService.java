@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators.IsArray;
+
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -107,9 +107,17 @@ public class UrlService {
 		}
 		UrlDetails sameUrlDetail = sameLongUrlList.get(0);
 		
-		
-		if (expiryDate.after(sameUrlDetail.getExpiryDateTime())) {
+		if(expiryDate.before(sameUrlDetail.getExpiryDateTime()))
+		{
+			if (getShortUrlRequestDTO.isTrackingEnabled()&&!sameUrlDetail.isTrackingEnabled()) {
+				
+				enableTracking(getShortUrlRequestDTO, sameUrlDetail.getSecondaryId(), sameUrlDetail.getShortUrl());
+			}
 
+			return new ShortenUrlResponseDTO(sameUrlDetail.getShortUrl());
+			
+		}
+		
 			log.info("Short Url={} already present for longUrl={}", sameLongUrlList.get(0).getShortUrl(), longUrl);
 			sameUrlDetail.setExpiryDateTime(expiryDate);
 			
@@ -129,7 +137,7 @@ public class UrlService {
 			{
 		Optional<ShortUrlDetails> shortUrlDetails=shortUrlDetailsRepository.findById(sameUrlDetail.getSecondaryId());
 				
-				if(shortUrlDetails!=null&&shortUrlDetails.isPresent())
+				if(shortUrlDetails.isPresent())
 				{
 					shortUrlDetails.get().setTtl(expiryDate);  
 					shortUrlDetails.get().setExpiryDuration(expiryDurationInSeconds);
@@ -163,7 +171,7 @@ public class UrlService {
 			urlDetailsRepository.save(sameUrlDetail);
 			repository.save(sameUrlAttribute);
 			
-		}
+		
 		
 		
 
@@ -273,7 +281,7 @@ public class UrlService {
 		}
 
 		Optional<ShortUrlDetails> shortUrlDetails = shortUrlDetailsRepository.findById(id);
-		if (shortUrlDetails != null && shortUrlDetails.isPresent()) {
+		if ( shortUrlDetails.isPresent()) {
 			trackShortUrl(shortUrlDetails.get(), new Date());
 
 		}
@@ -332,7 +340,7 @@ public class UrlService {
 
 		Optional<ShortUrlDetails> shortUrlDetails = shortUrlDetailsRepository.findById(id);
 
-		if (shortUrlDetails != null && shortUrlDetails.isPresent()) {
+		if (shortUrlDetails.isPresent()) {
 			shortUrlAttributes = new ShortUrlAttributes(shortUrlDetails.get());
 		}
 
@@ -465,7 +473,7 @@ public class UrlService {
 				return;
 			}
 			for (Map.Entry<String, String> entry : additionalParams.entrySet()) {
-				logline += entry.getKey() + "=\"" + entry.getValue() + "\" ";
+				logline = logline + entry.getKey() + "=\"" + entry.getValue() + "\" ";
 			}
 
 		}

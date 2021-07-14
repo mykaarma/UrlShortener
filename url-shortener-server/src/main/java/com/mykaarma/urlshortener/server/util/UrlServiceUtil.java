@@ -3,7 +3,7 @@ package com.mykaarma.urlshortener.server.util;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.Random;
+
 
 
 
@@ -20,9 +20,9 @@ import com.mykaarma.urlshortener.server.repository.UrlDetailsRepository;
 import com.mykaarma.urlshortener.server.repository.UrlRepository;
 
 import io.micrometer.core.instrument.util.IOUtils;
-import lombok.extern.slf4j.Slf4j;
+
 @Component
-@Slf4j
+
 public class UrlServiceUtil {
 	@Autowired
 	public UrlRepository repository;
@@ -58,19 +58,21 @@ public class UrlServiceUtil {
 	 */
 	public boolean isDurationValid(String urlDuration)
 	{
-		if(urlDuration.length()>1000) {return false;}
 		
+		boolean isValid=true;
+		if(urlDuration.length()>1000) {isValid= false;}
 		int i=0;
 		int count=0;
 		long currentLengthOfDigits=0;
 		boolean isLastCharDigit=false;
-		while(i<urlDuration.length())
+	
+		while(i<urlDuration.length()&&urlDuration.length()<=1000)
 		{
 			if(urlDuration.charAt(i)==':')
 			{
-				if(!isLastCharDigit) {return false;}
+				if(!isLastCharDigit||(currentLengthOfDigits>8)) {isValid=false;}
 				isLastCharDigit=false;
-				if(currentLengthOfDigits>8) {return false;}
+				
 				currentLengthOfDigits=0;
 				count++;
 				i++;
@@ -84,16 +86,17 @@ public class UrlServiceUtil {
 				
 				
 			}
-			else {return false;}
+			else {isValid=false;}
 			
 			
 		}
-		if(currentLengthOfDigits>8) {return false;}
+		
+		if(currentLengthOfDigits>8) {isValid=false;}
+		
+		if(count!=5||!isLastCharDigit) {isValid=false;}
+		return isValid;
 		
 		
-		
-		
-		return count==5&&isLastCharDigit;
 		
 	}
 	
@@ -402,8 +405,7 @@ public class UrlServiceUtil {
 	urlDetails.incrementClickCount();
 	
 	urlDetailsRepository.save(urlDetails);
-	return ;
-		
+
 		
 	}
 	

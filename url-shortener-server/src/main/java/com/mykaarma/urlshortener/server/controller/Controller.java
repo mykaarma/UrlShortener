@@ -14,8 +14,6 @@ import org.springframework.web.client.HttpServerErrorException.InternalServerErr
 
 import org.springframework.http.MediaType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -107,7 +105,7 @@ public class Controller {
 		catch( Exception e)
 		{
 			GetShortUrlClickCountResponseDTO getShortUrlClickCountResponseDTO=new  GetShortUrlClickCountResponseDTO();
-		       List<ApiError> errors = new ArrayList<ApiError>();
+		       List<ApiError> errors = new ArrayList<>();
 		       errors.add( new ApiError( UrlErrorCodes.INTERNAL_SERVER_ERROR));
 		       getShortUrlClickCountResponseDTO.setErrors(errors);
 		       response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(getShortUrlClickCountResponseDTO);

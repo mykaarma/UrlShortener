@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 //@RunWith(SpringRunner.class)
 @Slf4j
 @SpringBootTest(classes =UrlShortenerServer.class)
-public class UrlServiceTests {
+ class UrlServiceTests {
 	
 	@Autowired
 	private UrlService urlService;
