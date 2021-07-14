@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 	    void contextLoads() throws Exception {
 		 testShortUrl();
 		 testFindLongUrl();
+		 testFindClickCount();
 	 }
 	 
 	 public void testShortUrl() throws Exception
@@ -54,12 +55,28 @@ import lombok.extern.slf4j.Slf4j;
 		}
 		catch(Exception e)
 		{
-			log.info("testFindLongUrl could not succefully find Long Url for hash={}",shortUrlHash);
+			log.info("testFindLongUrl could not succesfully find Long Url for hash={}",shortUrlHash);
 		}
 		
 		
 		 
 	 }
-	 
+	 public void testFindClickCount() throws Exception
+	 {
+		String shortUrlHash="xxjwmq3";
+		 
+		try {
+		 long clickCount =  urlService.findClickCounts(shortUrlHash);
+		 log.info("click Count={} for shortUrlHash={}",clickCount,shortUrlHash);
+		 
+		}
+		catch(Exception e)
+		{
+			log.info("testFindClickCount could not succesfully find Click Count for hash={}",shortUrlHash);
+		}
+		
+		
+		 
+	 }
 	 
 }
