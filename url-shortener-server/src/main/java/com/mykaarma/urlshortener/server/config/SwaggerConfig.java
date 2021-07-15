@@ -55,7 +55,7 @@ public class SwaggerConfig {
     public Docket manageApiV2() {
     	return new Docket(DocumentationType.SWAGGER_2)  
     	          .select()                                  
-    	          .apis(RequestHandlerSelectors.any())              
+    	          .apis(RequestHandlerSelectors.basePackage("com.mykaarma.urlshortener.server.controller"))              
     	          .paths(PathSelectors.any())                          
     	          .build()
     	          .apiInfo(apiInfo()); 
