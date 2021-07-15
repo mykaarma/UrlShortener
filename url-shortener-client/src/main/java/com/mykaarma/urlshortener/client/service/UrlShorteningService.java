@@ -22,10 +22,10 @@ import retrofit2.http.Path;
 public interface UrlShorteningService {
 	
 	
-	@POST("/" + RestURIConstants.SHORTEN)
+	@POST( RestURIConstants.SHORTEN)
 	Call< ShortenUrlResponseDTO> shortenUrl(@Body ShortenUrlRequestDTO longUrlDto);
 	
-	@HTTP(method="GET",path = "/"+  RestURIConstants.REDIRECT +"/"+RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE)
+	@HTTP(method="GET",path =   RestURIConstants.REDIRECT +"/"+RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE)
 	 Call<String> redirectToLongUrl( @Path("shortUrlHash")String shortUrlHash);
 	
 	@GET( RestURIConstants.COUNT_CLICKS +"/"+ RestURIConstants.SHORT_URL_HASH_PATH_VARIABLE   )
