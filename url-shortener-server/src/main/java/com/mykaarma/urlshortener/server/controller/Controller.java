@@ -32,7 +32,7 @@ import com.mykaarma.urlshortener.server.service.UrlService;
 
 @RestController
 @Slf4j
-@RequestMapping("/"+RestURIConstants.URL_SHORTENER)
+
 @Api(tags = "Url Shortener")
 public class Controller {
 
