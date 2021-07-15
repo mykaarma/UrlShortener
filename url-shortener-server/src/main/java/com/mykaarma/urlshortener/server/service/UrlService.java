@@ -209,7 +209,7 @@ public class UrlService {
 
 		} while (!urlServiceUtil.isValid(hash));
 
-		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() + RestURIConstants.URL_SHORTENER + "/"+RestURIConstants.REDIRECT +"/"+ hash;
+		String shortUrl = getShortUrlRequestDTO.getShortUrlDomain() +"/"+ RestURIConstants.URL_SHORTENER + "/"+RestURIConstants.REDIRECT +"/"+ hash;
 
 		log.info("Created  a new ShortUrl={} for longUrl={},businessId={}", shortUrl, longUrl, businessId);
 
