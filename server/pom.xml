@@ -1,14 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.kaarma.kpaper</groupId>
-  <artifactId>kaarma-kpaper-reactor</artifactId>
-  <version>1.1</version>
+  <groupId>com.mykaarma</groupId>
+  <artifactId>url-shortener-server-mykaarma</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>kaarma-kpaper-reactor</name>
+  <name>url-shortener-server-mykaarma</name>
+  <properties combine.self="override">
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<docker.image.prefix>578061096415.dkr.ecr.us-east-1.amazonaws.com</docker.image.prefix>
+
+		<java.version>1.8</java.version>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
+	</properties>
+  <!-- <dependencies>
+    <dependency>
+        <groupId>com.kaarma</groupId>
+        <artifactId>url-shortener-model-mykaarma</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+      </dependency>
+    </dependencies> -->
   <modules>
-     <module>model</module>
-     <module>rest</module>
-     <module>client</module>
+     <module>../UrlShortener/url-shortener-server</module>
   </modules>
 </project>

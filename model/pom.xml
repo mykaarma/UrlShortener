@@ -7,7 +7,25 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>url-shortener-model-mykaarma</name>
+  <properties combine.self="override">
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
+	</properties>
+  <build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+
+			</plugin>
+
+		</plugins>
+	</build>
   <modules>
-     <module>UrlShortener/url-shortener-model</module>
+     <module>../UrlShortener/url-shortener-model</module>
   </modules>
 </project>
