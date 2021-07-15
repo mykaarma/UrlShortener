@@ -1,0 +1,3 @@
+[submodule "UrlShortener"]
+	path = UrlShortener
+	url = https://github.com/mykaarma/UrlShortener.git
