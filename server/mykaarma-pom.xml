@@ -14,4 +14,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <relativePath>../url-shortener-server</relativePath>
   </parent>
+  <build>
+    <sourceDirectory>../url-shortener-server/src/main/java</sourceDirectory>
+  </build>
 </project>
