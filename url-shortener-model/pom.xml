@@ -11,27 +11,18 @@
   <groupId>com.mykaarma</groupId>
   <artifactId>url-shortener-model</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>${packaging}</packaging> 
+  <packaging>pom</packaging> 
   <name>url-shortener-model</name>
   <url>http://maven.apache.org</url>
   <profiles>
     <profile>
         <id>open</id>
-	<properties>
-            <packaging>jar</packaging>
-    	</properties>
-    </profile>
-    <profile>
-        <id>private</id>
-	<properties>
-            <packaging>pom</packaging>
-    	</properties>
+	<packaging>jar</packaging> 
     </profile>
   </profiles>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
-    <packaging>pom</packaging>
   </properties>
   <dependencies>
   
