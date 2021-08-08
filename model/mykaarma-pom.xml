@@ -8,9 +8,6 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>url-shortener-model-mykaarma</name>
   <packaging>jar</packaging>
-  <properties combine.self="override">
-    <packaging>pom</packaging>
-  </properties>
   <parent>
     <groupId>com.mykaarma</groupId>
     <artifactId>url-shortener-model</artifactId>
