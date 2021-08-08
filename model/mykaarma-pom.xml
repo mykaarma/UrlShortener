@@ -11,6 +11,6 @@
     <groupId>com.mykaarma</groupId>
     <artifactId>url-shortener-model</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../UrlShortener/url-shortener-model</relativePath>
+    <relativePath>../url-shortener-model</relativePath>
   </parent>
 </project>
