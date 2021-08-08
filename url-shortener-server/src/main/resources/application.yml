@@ -9,9 +9,11 @@ spring:
         min-idle: 5
         max-wait: -1ms
       shutdown-timeout: 100ms
-    host: ${URL_SHORTENER_REDIS_HOST}
+    #host: ${URL_SHORTENER_REDIS_HOST}
+    host: redis
     password: p@ss$12E45
-    port: ${URL_SHORTENER_REDIS_PORT}
+    #port: ${URL_SHORTENER_REDIS_PORT}
+    port: 6379
     ssl: false
     timeout: 5000ms
   cache:
