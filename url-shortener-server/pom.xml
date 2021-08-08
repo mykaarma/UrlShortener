@@ -4,6 +4,12 @@
 	xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.mykaarma</groupId>
+  	<artifactId>url-shortener-server</artifactId>
+  	<version>0.0.1-SNAPSHOT</version>
+  	<packaging>pom</packaging> 
+  	<name>url-shortener-server</name>
+	<url>http://maven.apache.org</url>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -11,16 +17,11 @@
 		<relativePath /> 
 	</parent>
 
-	<artifactId>url-shortener-server</artifactId>
-
-	<name>url-shortener-server</name>
-	<packaging>pom</packaging>
-	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<docker.image.prefix>random</docker.image.prefix>
 
-		<java.version>16</java.version>
+		<java.version>11</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 
