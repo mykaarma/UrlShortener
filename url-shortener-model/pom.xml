@@ -11,12 +11,13 @@
   <groupId>com.mykaarma</groupId>
   <artifactId>url-shortener-model</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging> 
+  <packaging>${packaging}</packaging> 
   <name>url-shortener-model</name>
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    	<java.version>1.8</java.version>
+    <java.version>1.8</java.version>
+    <packaging>jar</packaging>
   </properties>
   <dependencies>
   
