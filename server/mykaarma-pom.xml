@@ -15,6 +15,6 @@
     <relativePath>../url-shortener-server</relativePath>
   </parent>
   <build>
-    <sourceDirectory>../url-shortener-server/src/main/java</sourceDirectory>
+    <directory>../url-shortener-server/src</directory>
   </build>
 </project>
