@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.googleanalytics.EventHit;
@@ -157,41 +158,34 @@ public class UrlService {
 	 * @throws ShortUrlException
 	 */
 	public String getHtmlForRedirectingToLongUrl(String shortUrlHash, String serviceAnalyticId) throws ShortUrlException {
-		
-		if (!urlServiceUtil.isHashValid(shortUrlHash)) {
-			log.info("Invalid Hash={}  ", hashCode());
-			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
-		}
 
-		long id = urlServiceUtil.convertHashToId(shortUrlHash);
+		UrlDetails existingUrlDetails = getExistingShortUrlDetails(shortUrlHash);
 
-		UrlDetails existingLongUrl = urlRepository.getLongUrlBySecondaryId(id);
-
-		if (existingLongUrl==null) {
+		if (existingUrlDetails==null) {
 			
 			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
 			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
 
 		}
 
-		if(existingLongUrl.getExpiryDateTime().before(new Date())) {
+		if(existingUrlDetails.getExpiryDateTime().before(new Date())) {
 			
 			log.info(" Short Url for shortUrlHash={} is expired ", shortUrlHash);
 			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
 
 		}
 		
-		if(existingLongUrl.getEventAction()==null || existingLongUrl.getEventCategory()==null) {
-			log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingLongUrl.getLongUrl());
+		if(existingUrlDetails.getEventAction()==null || existingUrlDetails.getEventCategory()==null) {
+			log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingUrlDetails.getLongUrl());
 
-			return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingLongUrl.getLongUrl());
+			return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
 		}
 
-		trackShortUrl(existingLongUrl, new Date(), serviceAnalyticId);
+		trackShortUrl(existingUrlDetails, new Date(), serviceAnalyticId);
 		
-		log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingLongUrl.getLongUrl());
+		log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingUrlDetails.getLongUrl());
 
-		return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingLongUrl.getLongUrl());
+		return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
 	}
 	
 	/**
@@ -204,6 +198,20 @@ public class UrlService {
 	public String getHtmlForRedirectingToLongUrl(String shortUrlHash) throws ShortUrlException {
 		
 		return getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+	}
+	
+	@Cacheable("urlDetails")
+	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
+		
+		if (!urlServiceUtil.isHashValid(shortUrlHash)) {
+			log.info("Invalid Hash={}  ", hashCode());
+			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
+		}
+		
+		long id = urlServiceUtil.convertHashToId(shortUrlHash);
+		UrlDetails existingLongUrl = urlRepository.getLongUrlBySecondaryId(id);
+		
+		return existingLongUrl;
 	}
 	
 	/**

@@ -11,4 +11,6 @@ public interface ShortUrlDatabaseAdapter {
 	
 	public UrlDetails getShortUrlByLongUrlAndBusinessId(String longUrl, String businessID) throws ShortUrlException;
 	
+	public boolean existsBySecondaryId(long secondaryId) throws ShortUrlException;
+	
 }

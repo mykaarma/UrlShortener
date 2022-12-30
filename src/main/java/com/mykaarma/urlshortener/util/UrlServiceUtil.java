@@ -6,10 +6,13 @@ import java.security.SecureRandom;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.ShortUrlInternalServerException;
+import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
+import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @Slf4j
 public class UrlServiceUtil {
+	
+	private ShortUrlDatabaseAdapter urlRepository;
+	
+	@Autowired
+	public UrlServiceUtil(ShortUrlDatabaseAdapter urlRepository) {
+		
+		this.urlRepository = urlRepository;
+	}
 	
 	private String randomAlphabet;
 	private String blackListedWordsFileUrl;
@@ -75,8 +86,18 @@ public class UrlServiceUtil {
 	 */
 	public long getRandomId(int hashLength) {
 		
-		long upperBound = (long)Math.pow(64, hashLength) - 1;
-		return sr.nextLong(upperBound);
+		double upperBound = Math.pow(64, hashLength) - 1;
+		long longMax = Long.MAX_VALUE;
+		long id;
+		do {
+			long randomValue = sr.nextLong();
+			if(randomValue<0) {
+				randomValue *= -1;
+			}
+			id = (long)(randomValue*upperBound/longMax);
+		}while(urlRepository.existsBySecondaryId(id));
+		
+		return id;
 	}
 	
 	/**
