@@ -16,7 +16,7 @@ import com.mykaarma.urlshortener.service.UrlService;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
 
 @SpringBootTest
-class UrlshortenerApplicationTests {
+class UrlshortenerTests {
 	
 	@Autowired
 	UrlServiceUtil urlServiceUtil;
@@ -29,11 +29,6 @@ class UrlshortenerApplicationTests {
 	
 	@MockBean
 	ShortUrlCacheAdapter shortUrlCacheAdapter;
-
-	@Test
-	void contextLoads() {
-		
-	}
 	
 	@Test
 	void generateShortUrlHash() {
@@ -81,6 +76,19 @@ class UrlshortenerApplicationTests {
 		UrlDetails urlDetails = new UrlDetails(urlServiceUtil.convertHashToId(shortUrlHash), "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
 		Mockito.when(mockRepository.getLongUrlBySecondaryId(urlServiceUtil.convertHashToId(shortUrlHash))).thenReturn(urlDetails);
 		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+		System.out.println("HTML Response: "+htmlResponse);
+	}
+	
+	@Test
+	void cacheTest() {
+		String shortUrlHash = "a1b2c3";
+		System.out.println("\n\nCache Test");
+		UrlDetails urlDetails = new UrlDetails(urlServiceUtil.convertHashToId(shortUrlHash), "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
+		Mockito.when(mockRepository.getLongUrlBySecondaryId(urlServiceUtil.convertHashToId(shortUrlHash))).thenReturn(urlDetails);
+		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+		System.out.println("HTML Response: "+htmlResponse);
+		
+		htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
 		System.out.println("HTML Response: "+htmlResponse);
 	}
 

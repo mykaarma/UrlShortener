@@ -1,5 +1,6 @@
 package com.mykaarma.urlshortener.persistence;
 
+
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.model.UrlDetails;
 

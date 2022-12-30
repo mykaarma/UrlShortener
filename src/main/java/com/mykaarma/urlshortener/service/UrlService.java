@@ -200,8 +200,17 @@ public class UrlService {
 		return getHtmlForRedirectingToLongUrl(shortUrlHash, null);
 	}
 	
-	@Cacheable("urlDetails")
+	/**
+	 * Fetches the urlDetails from the database using the shortUrlHash
+	 * 
+	 * @param shortUrlHash
+	 * @return urlDetails
+	 * @throws ShortUrlException
+	 */
+	@Cacheable(value="urlDetails", key="#shortUrlHash")
 	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
+		
+		System.out.println("Cache Miss");
 		
 		if (!urlServiceUtil.isHashValid(shortUrlHash)) {
 			log.info("Invalid Hash={}  ", hashCode());
@@ -209,9 +218,7 @@ public class UrlService {
 		}
 		
 		long id = urlServiceUtil.convertHashToId(shortUrlHash);
-		UrlDetails existingLongUrl = urlRepository.getLongUrlBySecondaryId(id);
-		
-		return existingLongUrl;
+		return urlRepository.getLongUrlBySecondaryId(id);
 	}
 	
 	/**

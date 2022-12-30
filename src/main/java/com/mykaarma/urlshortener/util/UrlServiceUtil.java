@@ -86,17 +86,11 @@ public class UrlServiceUtil {
 	 */
 	public long getRandomId(int hashLength) {
 		
-		double upperBound = Math.pow(64, hashLength) - 1;
-		long longMax = Long.MAX_VALUE;
+		long upperBound = (long)Math.pow(64, hashLength) - 1;
 		long id;
 		do {
-			long randomValue = sr.nextLong();
-			if(randomValue<0) {
-				randomValue *= -1;
-			}
-			id = (long)(randomValue*upperBound/longMax);
+			id = sr.nextLong(upperBound);
 		}while(urlRepository.existsBySecondaryId(id));
-		
 		return id;
 	}
 	
