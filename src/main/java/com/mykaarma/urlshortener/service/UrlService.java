@@ -220,10 +220,7 @@ public class UrlService {
 	 * @return urlDetails
 	 * @throws ShortUrlException
 	 */
-	@Cacheable(value="urlDetails", key="#shortUrlHash")
 	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
-		
-		System.out.println("Cache Miss");
 		
 		if (!urlServiceUtil.isHashValid(shortUrlHash)) {
 			log.info("Invalid Hash={}  ", hashCode());
@@ -233,40 +230,4 @@ public class UrlService {
 		return urlRepository.getLongUrlByShortUrlHash(shortUrlHash);
 	}
 	
-	/**
-	 * Posts the event to Google Analytics
-	 * 
-	 * @param eventAction
-	 * @param eventCategory
-	 * @param eventLabel
-	 * @param eventValue
-	 * @param serviceAnalyticId
-	 * @return logline
-	 */
-	private String postToGoogleAnalytics(String eventAction, String eventCategory, String eventLabel, Long eventValue, String serviceAnalyticId) {
-		String logline = "";
-		if (!(eventCategory == null || eventCategory.isEmpty() || eventAction == null
-				|| eventAction.trim().isEmpty())) {
-			eventLabel = eventLabel == null ? "" : eventLabel;
-			eventValue = eventValue == null ? 1 : eventValue;
-
-			String gaTrackingID = serviceAnalyticId;
-			GoogleAnalytics ga = new GoogleAnalytics(gaTrackingID);
-			EventHit event = new EventHit(eventCategory, eventAction, eventLabel, eventValue.intValue());
-			event.clientId("SHORTURL");
-
-			log.info("Posting event to GA. ga_tracking_id={} ga_event={}", gaTrackingID, event.toString());
-
-			ga.post(event);
-
-			logline += "event_category=\"" + eventCategory + "\" ";
-			logline += "event_action=\"" + eventAction + "\" ";
-			logline += "event_label=\"" + eventLabel + "\" ";
-			logline += "event_value=\"" + eventValue + "\" ";
-		} 
-		else {
-			logline += " ShortURL TTL expired. Not logging anything in GA. ";
-		}
-		return logline;
-	}
 }
