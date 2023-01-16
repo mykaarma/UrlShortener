@@ -8,10 +8,10 @@ public interface ShortUrlDatabaseAdapter {
 	
 	public void saveUrl(UrlDetails urlDetails) throws ShortUrlException;
 	
-	public UrlDetails getLongUrlBySecondaryId(long secondaryId) throws ShortUrlException;
+	public UrlDetails getLongUrlByShortUrlHash(String shortUrlHash) throws ShortUrlException;
 	
-	public UrlDetails getShortUrlByLongUrlAndBusinessId(String longUrl, String businessID) throws ShortUrlException;
+	public UrlDetails getShortUrlByLongUrlAndBusinessUUID(String longUrl, String businessUUID) throws ShortUrlException;
 	
-	public boolean existsBySecondaryId(long secondaryId) throws ShortUrlException;
+	public boolean existsByShortUrlHash(String shortUrlHash) throws ShortUrlException;
 	
 }

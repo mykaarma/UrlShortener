@@ -41,16 +41,12 @@ public class UrlService {
 	}
 	
 	/**
-	 * Creating a shortUrl for the provided longUrl and businessId
+	 * Creating a shortUrl for the provided longUrl and businessUUID
 	 * 
 	 * @param longUrl
 	 * @param shortUrlDomain
 	 * @param expiryDuration
-	 * @param businessId
-	 * @param eventAction
-	 * @param eventLabel
-	 * @param eventCategory
-	 * @param eventValue
+	 * @param businessUUID
 	 * @param additionalParams
 	 * @param overwrite
 	 * @param hashLength
@@ -60,9 +56,8 @@ public class UrlService {
 	 * @return ShortUrl
 	 * @throws ShortUrlException
 	 */
-	public ShortUrl shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessId, String eventAction, 
-			String eventLabel, String eventCategory, Long eventValue, Map<String, String> additionalParams, boolean overwrite, int hashLength,
-			String blackListedWordsFileUrl, String randomAlphabet, String urlPrefix) throws ShortUrlException {
+	public ShortUrl shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessUUID, Map<String, String> additionalParams,
+			boolean overwrite, int hashLength, String blackListedWordsFileUrl, String randomAlphabet, String urlPrefix) throws ShortUrlException {
 		
 		this.urlServiceUtil.setBlackListedWordsFileUrl(blackListedWordsFileUrl);
 		this.urlServiceUtil.setRandomAlphabet(randomAlphabet);
@@ -78,70 +73,57 @@ public class UrlService {
 		}
 		
 		if (!urlServiceUtil.isExpiryDurationValid(expiryDuration)) {
-			log.error("Duration={} is Invalid for businessId={} , longUrl={}", expiryDuration, businessId, longUrl);
+			log.error("Duration={} is Invalid for businessUUID={} , longUrl={}", expiryDuration, businessUUID, longUrl);
 			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST);
 
 		}
 		
 		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
 		
-		UrlDetails existingShortUrl = urlRepository.getShortUrlByLongUrlAndBusinessId(longUrl, businessId);
+		UrlDetails existingShortUrl = urlRepository.getShortUrlByLongUrlAndBusinessUUID(longUrl, businessUUID);
 		
 		if (existingShortUrl!=null) {
 			
-			log.info("ShortUrl={} already present for longUrl={} and businessId={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessId());
+			log.info("ShortUrl={} already present for longUrl={} and businessUUID={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID());
 			
 			if(overwrite) {
 				if (expiryDate.before(existingShortUrl.getExpiryDateTime())) {
 					log.error("The provided expiryDate for the shortUrl = {} is before the existing expiryDate", existingShortUrl.getShortUrl());
 				}
 				
-				if((eventAction==null || eventCategory==null) && (existingShortUrl.getEventAction()!=null && existingShortUrl.getEventCategory()!=null)) {
-					log.info("Disabling tracking of shortUrl={} for longUrl={} and businessId={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessId());
-				}
 				
 				log.warn("overwriting existing shortUrl details of shortUrl = {}", existingShortUrl.getShortUrl());
 				existingShortUrl.setExpiryDateTime(expiryDate);
-				existingShortUrl.setEventAction(eventAction);
-				existingShortUrl.setEventCategory(eventCategory);
-				existingShortUrl.setEventLabel(eventLabel);
-				existingShortUrl.setEventValue(eventValue);
 				existingShortUrl.setAdditionalParams(additionalParams);
 			}
 			
 			else {
 				if (expiryDate.after(existingShortUrl.getExpiryDateTime())) {
-					log.info("Extending expiryDate of shortUrl={} for longUrl={} and businessId={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessId());
+					log.info("Extending expiryDate of shortUrl={} for longUrl={} and businessUUID={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID());
 					existingShortUrl.setExpiryDateTime(expiryDate);
-				}
-				if((eventAction!=null && eventCategory!=null) && (existingShortUrl.getEventAction()==null || existingShortUrl.getEventCategory()==null)) {
-					log.info("Enabling tracking of shortUrl={} for longUrl={} and businessId={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessId());
-					existingShortUrl.setEventAction(eventAction);
-					existingShortUrl.setEventCategory(eventCategory);
-					existingShortUrl.setEventLabel(eventLabel);
-					existingShortUrl.setEventValue(eventValue);
 				}
 			}
 			
 			return new ShortUrl(existingShortUrl.getShortUrl(), existingShortUrl.getExpiryDateTime());
 		}
 		
-		log.info("Creating a new shortUrl for longUrl={} and businessId={}", longUrl, businessId);
+		log.info("Creating a new shortUrl for longUrl={} and businessUUID={}", longUrl, businessUUID);
 		
-		long secondaryId;
+		long randomId;
 		String shortUrlHash;
 
 		do {
-			secondaryId = urlServiceUtil.getRandomId(hashLength);
+			randomId = urlServiceUtil.getRandomId(hashLength);
 
-			shortUrlHash = urlServiceUtil.convertIdToHash(secondaryId, hashLength);
+			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
 
 		} while (!urlServiceUtil.isHashValid(shortUrlHash));
 		
 		String shortUrl = shortUrlDomain + "/" + urlPrefix + "/" + shortUrlHash;
 		
-		UrlDetails shortUrlDetails = new UrlDetails(secondaryId, longUrl, shortUrl, new Date(), expiryDate, businessId, eventAction, eventLabel, 
-				eventCategory, eventValue, additionalParams);
+		Date currentDateTime = new Date();
+		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, longUrl, shortUrl, currentDateTime, expiryDate, businessUUID,
+				additionalParams, currentDateTime, true);
 		
 		urlRepository.saveUrl(shortUrlDetails);
 		
@@ -153,11 +135,10 @@ public class UrlService {
 	 * Returns the HTML response for redirecting to the long URL from the short URL hash
 	 * 
 	 * @param shortUrlHash
-	 * @param serviceAnalyticId
 	 * @return redirectingHtmlResponse
 	 * @throws ShortUrlException
 	 */
-	public String getHtmlForRedirectingToLongUrl(String shortUrlHash, String serviceAnalyticId) throws ShortUrlException {
+	public String getHtmlForRedirectingToLongUrl(String shortUrlHash) throws ShortUrlException {
 
 		UrlDetails existingUrlDetails = getExistingShortUrlDetails(shortUrlHash);
 
@@ -175,29 +156,61 @@ public class UrlService {
 
 		}
 		
-		if(existingUrlDetails.getEventAction()==null || existingUrlDetails.getEventCategory()==null) {
-			log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingUrlDetails.getLongUrl());
-
-			return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
-		}
-
-		trackShortUrl(existingUrlDetails, new Date(), serviceAnalyticId);
-		
 		log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingUrlDetails.getLongUrl());
 
-		return urlServiceUtil.replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
+		return replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
+	}
+	
+	public UrlDetails getShortUrlDetails(String shortUrlHash) throws ShortUrlException {
+		
+		UrlDetails existingUrlDetails = shortUrlCacheAdapter.fetchUrlDetailsFromCache(shortUrlHash);
+		
+		if(existingUrlDetails != null) {
+			return existingUrlDetails;
+		}
+		
+		existingUrlDetails = getExistingShortUrlDetails(shortUrlHash);
+
+		if (existingUrlDetails==null) {
+			
+			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+
+		}
+
+		if(existingUrlDetails.getExpiryDateTime().before(new Date())) {
+			
+			log.info(" Short Url for shortUrlHash={} is expired ", shortUrlHash);
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+
+		}
+		
+		long ttl = urlServiceUtil.getDurationBetweenTwoDatesInSeconds(existingUrlDetails.getExpiryDateTime(), new Date());
+		if(ttl > 24*60*60) {
+			ttl = 24*60*60;
+		}
+		
+		shortUrlCacheAdapter.saveInCache(shortUrlHash, existingUrlDetails, ttl);
+		
+		return existingUrlDetails;
 	}
 	
 	/**
-	 * Returns the HTML response for redirecting to the long URL from the short URL hash. This does not require the service analytic ID for tracking
-	 * 
-	 * @param shortUrlHash
-	 * @return redirectingHtmlResponse
-	 * @throws ShortUrlException
+	 * Returns the HTML response redirecting to the longUrl
+	 * @param longUrl
+	 * @return HTML response redirecting to longUrl
 	 */
-	public String getHtmlForRedirectingToLongUrl(String shortUrlHash) throws ShortUrlException {
-		
-		return getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+	public String replaceUrlInRedirectingHtmlTemplate(String longUrl) {
+		String html = "<!DOCTYPE html>\r\n<html>\r\n<head lang=\"en\">\r\n    <meta charset=\"UTF-8\">\r\n"
+				+ "<meta http-equiv=\"cache-control\" content=\"max-age=0\" />\r\n"
+				+ "<meta http-equiv=\"cache-control\" content=\"no-cache\" />\r\n"
+				+ "<meta http-equiv=\"expires\" content=\"0\" />\r\n"
+				+ "<meta http-equiv=\"expires\" content=\"Tue, 01 Jan 1980 1:00:00 GMT\" />\r\n"
+				+ "<meta http-equiv=\"pragma\" content=\"no-cache\" />\r\n"
+				+ "<meta http-equiv=\"refresh\" content=\"0; URL='_url'\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n_loading  Please Wait\r\n</body>\r\n</html>";
+		html = html.replace("_url", longUrl);
+
+		return html;
 	}
 	
 	/**
@@ -216,51 +229,8 @@ public class UrlService {
 			log.info("Invalid Hash={}  ", hashCode());
 			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
 		}
-		
-		long id = urlServiceUtil.convertHashToId(shortUrlHash);
-		return urlRepository.getLongUrlBySecondaryId(id);
-	}
-	
-	/**
-	 * Tracks the short URL
-	 * 
-	 * @param urlDetails
-	 * @param logTime
-	 * @param serviceAnalyticId
-	 * @throws ShortUrlException
-	 */
-	private void trackShortUrl(UrlDetails urlDetails, Date logTime, String serviceAnalyticId) throws ShortUrlException {
 
-		String eventCategory = urlDetails.getEventCategory();
-		String eventAction = urlDetails.getEventAction();
-		String eventLabel = urlDetails.getEventLabel();
-		String shortUrl = urlDetails.getShortUrl();
-
-		Long eventValue = urlDetails.getEventValue();
-		Date expiryDateTime = urlDetails.getExpiryDateTime();
-
-		log.info("short_url_extracted=\"" + shortUrl + "\"");
-
-		log.info("log time : " + logTime);
-		String logline = "SHORT URL OPENED short_url_opened=\"" + shortUrl + "\" ";
-
-		if (expiryDateTime.after(logTime)) {
-
-			logline += postToGoogleAnalytics(eventAction, eventCategory, eventLabel, eventValue, serviceAnalyticId);
-
-			Map<String, String> additionalParams = urlDetails.getAdditionalParams();
-
-			if (additionalParams == null) {
-				log.info(logline);
-				return;
-			}
-			for (Map.Entry<String, String> entry : additionalParams.entrySet()) {
-				logline = logline + entry.getKey() + "=\"" + entry.getValue() + "\" ";
-			}
-
-		}
-		log.info(logline);
-
+		return urlRepository.getLongUrlByShortUrlHash(shortUrlHash);
 	}
 	
 	/**

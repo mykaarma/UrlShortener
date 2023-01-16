@@ -14,8 +14,12 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShortUrlException extends RuntimeException{
+public class ShortUrlException extends Exception {
 	
 	private UrlErrorCodes errorCode;
+	
+	public ShortUrlException(String errorMessage) {
+		errorCode.setErrorMessage(errorMessage);
+	}
 
 }

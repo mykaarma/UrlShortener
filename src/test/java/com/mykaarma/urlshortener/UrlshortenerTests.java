@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.model.ShortUrl;
 import com.mykaarma.urlshortener.model.UrlDetails;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
@@ -31,7 +32,7 @@ class UrlshortenerTests {
 	ShortUrlCacheAdapter shortUrlCacheAdapter;
 	
 	@Test
-	void generateShortUrlHash() {
+	void generateShortUrlHash() throws ShortUrlException {
 		System.out.println("\n\nGenerateShortUrlHash");
 		long randomId = urlServiceUtil.getRandomId(7);
 		String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, 7);
@@ -39,56 +40,56 @@ class UrlshortenerTests {
 	}
 	
 	@Test
-	void shortenUrlTestNew() {
+	void shortenUrlTestNew() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestNew");
-		ShortUrl shortUrl = urlService.shortenUrl("https://google.com/sieifnqinfiniqewfniqeinf", "myk.com", 3600, "abcd", null, null, null, null, null, false, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
+		ShortUrl shortUrl = urlService.shortenUrl("https://google.com/sieifnqinfiniqewfniqeinf", "myk.com", 3600, "abcdef", null, false, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
 		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
 	}
 	
 	@Test
-	void shortenUrlTestWithOverwrite() {
+	void shortenUrlTestWithOverwrite() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestExistingWithOverwrite");
-		UrlDetails urlDetails = new UrlDetails(25, "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
-		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessId("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
-		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", "click", null, "clickCat", null, null, true, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
+		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
+		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
+		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, true, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
 		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
 	}
 	
 	@Test
-	void shortenUrlTestWithoutOverwriteWithTracking() {
+	void shortenUrlTestWithoutOverwriteWithTracking() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestExistingWithoutOverwrite");
-		UrlDetails urlDetails = new UrlDetails(25, "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
-		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessId("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
-		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", "click", null, "clickCat", null, null, false, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
+		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
+		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
+		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, false, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
 		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
 	}
 	
 	@Test
-	void getRedirectingHtmlForLongUrl() {
+	void getRedirectingHtmlForLongUrl() throws ShortUrlException {
 		String shortUrlHash = "a1b2c3";
 		System.out.println("\n\ngetRedirectingHtmlForLongUrl");
-		UrlDetails urlDetails = new UrlDetails(urlServiceUtil.convertHashToId(shortUrlHash), "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
-		Mockito.when(mockRepository.getLongUrlBySecondaryId(urlServiceUtil.convertHashToId(shortUrlHash))).thenReturn(urlDetails);
-		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
+		Mockito.when(mockRepository.getLongUrlByShortUrlHash(shortUrlHash)).thenReturn(urlDetails);
+		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash);
 		System.out.println("HTML Response: "+htmlResponse);
 	}
 	
 	@Test
-	void cacheTest() {
+	void cacheTest() throws ShortUrlException {
 		String shortUrlHash = "a1b2c3";
 		System.out.println("\n\nCache Test");
-		UrlDetails urlDetails = new UrlDetails(urlServiceUtil.convertHashToId(shortUrlHash), "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, null, null, null);
-		Mockito.when(mockRepository.getLongUrlBySecondaryId(urlServiceUtil.convertHashToId(shortUrlHash))).thenReturn(urlDetails);
-		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
+		Mockito.when(mockRepository.getLongUrlByShortUrlHash(shortUrlHash)).thenReturn(urlDetails);
+		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash);
 		System.out.println("HTML Response: "+htmlResponse);
 		
-		htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash, null);
+		htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash);
 		System.out.println("HTML Response: "+htmlResponse);
 	}
 

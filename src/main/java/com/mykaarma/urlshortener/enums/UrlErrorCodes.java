@@ -21,4 +21,8 @@ public enum UrlErrorCodes {
 	private String errorTitle;
 	private String errorDescription;
 	private String errorMessage;
+	
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
 }

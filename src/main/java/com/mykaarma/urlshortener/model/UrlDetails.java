@@ -11,15 +11,13 @@ import lombok.Data;
 @AllArgsConstructor
 public class UrlDetails implements Serializable {
 	
-	private long secondaryId;
+	private String shortUrlHash;
 	private String longUrl;
 	private String shortUrl;
 	private Date creationDateTime;
 	private Date expiryDateTime;
-	private String businessId;
-	private String eventAction;
-	private String eventLabel;
-	private String eventCategory;
-	private Long eventValue;
+	private String businessUUID;
 	private Map<String, String> additionalParams;
+	private Date lastAccessedDateTime;
+	private boolean isValid;
 }

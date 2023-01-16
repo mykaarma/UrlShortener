@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
+import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlInternalServerException;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
@@ -79,18 +80,26 @@ public class UrlServiceUtil {
 	}
 	
 	/**
+	 * 
+	 * @param date1
+	 * @param date2
+	 * @return difference between dates
+	 */
+	public long getDurationBetweenTwoDatesInSeconds(Date date1, Date date2) {
+		
+		return (date2.getTime() - date1.getTime())/1000;
+	}
+	
+	/**
 	 * Generates a random ID corresponding to the required hashLength
 	 * 
 	 * @param hashLength
 	 * @return randomId
 	 */
-	public long getRandomId(int hashLength) {
+	public long getRandomId(int hashLength) throws ShortUrlException {
 		
 		long upperBound = (long)Math.pow(64, hashLength) - 1;
-		long id;
-		do {
-			id = sr.nextLong(upperBound);
-		}while(urlRepository.existsBySecondaryId(id));
+		long id = sr.nextLong(upperBound);
 		return id;
 	}
 	
@@ -139,7 +148,9 @@ public class UrlServiceUtil {
 	 * @return whether the hash is valid or not (boolean)
 	 * @throws ShortUrlInternalServerException
 	 */
-	public boolean isHashValid(String hash) throws ShortUrlInternalServerException {
+	public boolean isHashValid(String hash) throws ShortUrlException {
+		
+		if(urlRepository.existsByShortUrlHash(hash)) {return false;}
 		
 		if(hash.length()>20||hash.isEmpty()) {return false;}
 		for(int i=0;i<hash.length();i++)
@@ -201,21 +212,4 @@ public class UrlServiceUtil {
 		}	
 	}
 	
-	/**
-	 * Returns the HTML response redirecting to the longUrl
-	 * @param longUrl
-	 * @return HTML response redirecting to longUrl
-	 */
-	public String replaceUrlInRedirectingHtmlTemplate(String longUrl) {
-		String html = "<!DOCTYPE html>\r\n<html>\r\n<head lang=\"en\">\r\n    <meta charset=\"UTF-8\">\r\n"
-				+ "<meta http-equiv=\"cache-control\" content=\"max-age=0\" />\r\n"
-				+ "<meta http-equiv=\"cache-control\" content=\"no-cache\" />\r\n"
-				+ "<meta http-equiv=\"expires\" content=\"0\" />\r\n"
-				+ "<meta http-equiv=\"expires\" content=\"Tue, 01 Jan 1980 1:00:00 GMT\" />\r\n"
-				+ "<meta http-equiv=\"pragma\" content=\"no-cache\" />\r\n"
-				+ "<meta http-equiv=\"refresh\" content=\"0; URL='_url'\" />\r\n    <title></title>\r\n</head>\r\n<body>\r\n_loading  Please Wait\r\n</body>\r\n</html>";
-		html = html.replace("_url", longUrl);
-
-		return html;
-	}
 }
