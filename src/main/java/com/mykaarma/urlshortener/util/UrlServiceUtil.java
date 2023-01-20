@@ -7,7 +7,10 @@ import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
@@ -18,22 +21,22 @@ import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-@Component
-@Setter
 @Slf4j
+@Service
+@Setter
 public class UrlServiceUtil {
 	
 	private ShortUrlDatabaseAdapter urlRepository;
 	
 	@Autowired
-	public UrlServiceUtil(ShortUrlDatabaseAdapter urlRepository) {
+	public UrlServiceUtil(@Qualifier("shortUrlDatabaseAdapterImpl") ShortUrlDatabaseAdapter urlRepository) {
 		
 		this.urlRepository = urlRepository;
 	}
 	
-	private String randomAlphabet;
-	private String blackListedWordsFileUrl;
+	private String blackListedWordsFileUrl = null;
 	private static final String DEFAULT_RANDOM_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
+	private String randomAlphabet = DEFAULT_RANDOM_ALPHABET;
 	private static String[] blackListedWords = null;
 	SecureRandom sr = new SecureRandom();
 
