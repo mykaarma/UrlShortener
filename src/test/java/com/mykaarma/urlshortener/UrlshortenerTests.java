@@ -1,6 +1,8 @@
 package com.mykaarma.urlshortener;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -52,7 +54,9 @@ class UrlshortenerTests {
 	void shortenUrlTestWithOverwrite() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestExistingWithOverwrite");
 		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
-		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
+		List<UrlDetails> urlDetailsList = new ArrayList<>();
+		urlDetailsList.add(urlDetails);
+		Mockito.when(mockRepository.getUrlDetailsByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetailsList);
 		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, true, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
@@ -63,7 +67,9 @@ class UrlshortenerTests {
 	void shortenUrlTestWithoutOverwriteWithTracking() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestExistingWithoutOverwrite");
 		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
-		Mockito.when(mockRepository.getShortUrlByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetails);
+		List<UrlDetails> urlDetailsList = new ArrayList<>();
+		urlDetailsList.add(urlDetails);
+		Mockito.when(mockRepository.getUrlDetailsByLongUrlAndBusinessUUID("https://abcd.com/ABUAFDfdv", "abcdef")).thenReturn(urlDetailsList);
 		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, false, 6, "https://static.mykaarma.dev/blacklisted-words.txt", null, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
@@ -75,7 +81,9 @@ class UrlshortenerTests {
 		String shortUrlHash = "a1b2c3";
 		System.out.println("\n\ngetRedirectingHtmlForLongUrl");
 		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
-		Mockito.when(mockRepository.getLongUrlByShortUrlHash(shortUrlHash)).thenReturn(urlDetails);
+		List<UrlDetails> urlDetailsList = new ArrayList<>();
+		urlDetailsList.add(urlDetails);
+		Mockito.when(mockRepository.getUrlDetailsByShortUrlHash(shortUrlHash)).thenReturn(urlDetailsList);
 		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash);
 		System.out.println("HTML Response: "+htmlResponse);
 	}
@@ -85,7 +93,9 @@ class UrlshortenerTests {
 		String shortUrlHash = "a1b2c3";
 		System.out.println("\n\nCache Test");
 		UrlDetails urlDetails = new UrlDetails("a1b2c3", "https://abcd.com/ABUAFDfdv", "myk.com/a1b2c3", new Date(), urlServiceUtil.findExpiryDate(7200), "abcdef", null, null, true);
-		Mockito.when(mockRepository.getLongUrlByShortUrlHash(shortUrlHash)).thenReturn(urlDetails);
+		List<UrlDetails> urlDetailsList = new ArrayList<>();
+		urlDetailsList.add(urlDetails);
+		Mockito.when(mockRepository.getUrlDetailsByShortUrlHash(shortUrlHash)).thenReturn(urlDetailsList);
 		String htmlResponse = urlService.getHtmlForRedirectingToLongUrl(shortUrlHash);
 		System.out.println("HTML Response: "+htmlResponse);
 		

@@ -1,14 +1,12 @@
 package com.mykaarma.urlshortener.service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import com.mykaarma.googleanalytics.EventHit;
-import com.mykaarma.googleanalytics.GoogleAnalytics;
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.BadRedirectingRequestException;
 import com.mykaarma.urlshortener.exception.BadShorteningRequestException;
@@ -80,9 +78,11 @@ public class UrlService {
 		
 		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
 		
-		UrlDetails existingShortUrl = urlRepository.getShortUrlByLongUrlAndBusinessUUID(longUrl, businessUUID);
+		List<UrlDetails> existingShortUrls = urlRepository.getUrlDetailsByLongUrlAndBusinessUUID(longUrl, businessUUID);
 		
-		if (existingShortUrl!=null) {
+		if (!(existingShortUrls.isEmpty())) {
+			
+			UrlDetails existingShortUrl = existingShortUrls.get(0);
 			
 			log.info("ShortUrl={} already present for longUrl={} and businessUUID={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID());
 			
@@ -227,7 +227,11 @@ public class UrlService {
 			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
 		}
 
-		return urlRepository.getLongUrlByShortUrlHash(shortUrlHash);
+		List<UrlDetails> existingShortUrls = urlRepository.getUrlDetailsByShortUrlHash(shortUrlHash);
+		if(existingShortUrls.isEmpty()) {
+			return null;
+		}
+		return existingShortUrls.get(0);
 	}
 	
 }

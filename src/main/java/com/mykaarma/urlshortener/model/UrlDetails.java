@@ -18,6 +18,6 @@ public class UrlDetails implements Serializable {
 	private Date expiryDateTime;
 	private String businessUUID;
 	private Map<String, String> additionalParams;
-	private Date lastAccessedDateTime;
+	private Date lastAccessedTimestamp;
 	private boolean isValid;
 }
