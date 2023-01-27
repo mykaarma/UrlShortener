@@ -78,7 +78,7 @@ public class UrlService {
 		
 		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
 		
-		List<UrlDetails> existingShortUrls = urlRepository.getUrlDetailsByLongUrlAndBusinessUUID(longUrl, businessUUID);
+		List<UrlDetails> existingShortUrls = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUID(longUrl, businessUUID);
 		
 		if (!(existingShortUrls.isEmpty())) {
 			
@@ -104,6 +104,7 @@ public class UrlService {
 				}
 			}
 			
+			urlRepository.saveUrl(existingShortUrl);
 			return new ShortUrl(existingShortUrl.getShortUrl(), existingShortUrl.getExpiryDateTime());
 		}
 		
@@ -221,11 +222,6 @@ public class UrlService {
 	 * @throws ShortUrlException
 	 */
 	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
-		
-		if (!urlServiceUtil.isHashValid(shortUrlHash)) {
-			log.info("Invalid Hash={}  ", hashCode());
-			throw new BadRedirectingRequestException(UrlErrorCodes.INVALID_SHORT_URL);
-		}
 
 		List<UrlDetails> existingShortUrls = urlRepository.getUrlDetailsByShortUrlHash(shortUrlHash);
 		if(existingShortUrls.isEmpty()) {

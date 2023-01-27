@@ -29,7 +29,7 @@ public class UrlServiceUtil {
 	private ShortUrlDatabaseAdapter urlRepository;
 	
 	@Autowired
-	public UrlServiceUtil(@Qualifier("shortUrlDatabaseAdapterImpl") ShortUrlDatabaseAdapter urlRepository) {
+	public UrlServiceUtil(ShortUrlDatabaseAdapter urlRepository) {
 		
 		this.urlRepository = urlRepository;
 	}
