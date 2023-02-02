@@ -13,7 +13,6 @@ import com.mykaarma.urlshortener.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlNotFoundException;
 import com.mykaarma.urlshortener.model.AvailableHashPool;
-import com.mykaarma.urlshortener.model.ShortUrl;
 import com.mykaarma.urlshortener.model.UrlDetails;
 import com.mykaarma.urlshortener.persistence.AvailableHashPoolAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
@@ -56,10 +55,10 @@ public class UrlService {
 	 * @param blackListedWordsFileUrl
 	 * @param randomAlphabet
 	 * @param urlPrefix
-	 * @return ShortUrl
+	 * @return UrlDetails
 	 * @throws ShortUrlException
 	 */
-	public ShortUrl shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessUUID, Map<String, String> additionalParams,
+	public UrlDetails shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessUUID, Map<String, String> additionalParams,
 			boolean overwrite, String urlPrefix) throws ShortUrlException {
 		
 		if(longUrl==null || shortUrlDomain==null) {
@@ -112,7 +111,7 @@ public class UrlService {
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to update the url details in the database");
 			}
 			
-			return new ShortUrl(existingShortUrl.getShortUrl(), existingShortUrl.getExpiryDateTime());
+			return existingShortUrl;
 		}
 		
 		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
@@ -144,7 +143,7 @@ public class UrlService {
 			throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to save the url details to database");
 		}
 		
-		return new ShortUrl(shortUrl, expiryDate);
+		return shortUrlDetails;
 		
 	}
 	

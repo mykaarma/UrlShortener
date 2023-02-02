@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import com.mykaarma.urlshortener.exception.ShortUrlException;
-import com.mykaarma.urlshortener.model.ShortUrl;
 import com.mykaarma.urlshortener.model.UrlDetails;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
@@ -44,10 +43,10 @@ class UrlshortenerTests {
 	@Test
 	void shortenUrlTestNew() throws ShortUrlException {
 		System.out.println("\n\nshortenUrlTestNew");
-		ShortUrl shortUrl = urlService.shortenUrl("https://google.com/sieifnqinfiniqewfniqeinf", "myk.com", 3600, "abcdef", null, false, "v2");
+		UrlDetails shortUrl = urlService.shortenUrl("https://google.com/sieifnqinfiniqewfniqeinf", "myk.com", 3600, "abcdef", null, false, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
-		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
+		System.out.println("Expiry Date: "+shortUrl.getExpiryDateTime());
 	}
 	
 	@Test
@@ -57,10 +56,10 @@ class UrlshortenerTests {
 		List<UrlDetails> urlDetailsList = new ArrayList<>();
 		urlDetailsList.add(urlDetails);
 		Mockito.when(mockRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain("https://abcd.com/ABUAFDfdv", "abcdef", "dom")).thenReturn(urlDetailsList);
-		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, true, "v2");
+		UrlDetails shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, true, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
-		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
+		System.out.println("Expiry Date: "+shortUrl.getExpiryDateTime());
 	}
 	
 	@Test
@@ -70,10 +69,10 @@ class UrlshortenerTests {
 		List<UrlDetails> urlDetailsList = new ArrayList<>();
 		urlDetailsList.add(urlDetails);
 		Mockito.when(mockRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain("https://abcd.com/ABUAFDfdv", "abcdef", "dom")).thenReturn(urlDetailsList);
-		ShortUrl shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, false, "v2");
+		UrlDetails shortUrl = urlService.shortenUrl("https://abcd.com/ABUAFDfdv", "myk.com", 3600, "abcdef", null, false, "v2");
 		System.out.println("Short URL generated successfully");
 		System.out.println("Short URL: "+shortUrl.getShortUrl());
-		System.out.println("Expiry Date: "+shortUrl.getExpiryDate());
+		System.out.println("Expiry Date: "+shortUrl.getExpiryDateTime());
 	}
 	
 	@Test
