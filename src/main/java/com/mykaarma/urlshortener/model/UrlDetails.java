@@ -6,12 +6,15 @@ import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 @AllArgsConstructor
+@ToString
 public class UrlDetails implements Serializable {
 	
 	private String shortUrlHash;
+	private String shortUrlDomain;
 	private String longUrl;
 	private String shortUrl;
 	private Date creationDateTime;

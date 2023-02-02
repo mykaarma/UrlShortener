@@ -12,8 +12,10 @@ import com.mykaarma.urlshortener.exception.BadRedirectingRequestException;
 import com.mykaarma.urlshortener.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlNotFoundException;
+import com.mykaarma.urlshortener.model.AvailableHashPool;
 import com.mykaarma.urlshortener.model.ShortUrl;
 import com.mykaarma.urlshortener.model.UrlDetails;
+import com.mykaarma.urlshortener.persistence.AvailableHashPoolAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
@@ -30,12 +32,15 @@ public class UrlService {
 	
 	private ShortUrlCacheAdapter shortUrlCacheAdapter;
 	
+	private AvailableHashPoolAdapter availableHashPoolAdapter;
+	
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.urlRepository = urlRepository;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
+		this.availableHashPoolAdapter = availableHashPoolAdapter;
 	}
 	
 	/**
@@ -55,78 +60,89 @@ public class UrlService {
 	 * @throws ShortUrlException
 	 */
 	public ShortUrl shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessUUID, Map<String, String> additionalParams,
-			boolean overwrite, int hashLength, String blackListedWordsFileUrl, String randomAlphabet, String urlPrefix) throws ShortUrlException {
-		
-		this.urlServiceUtil.setBlackListedWordsFileUrl(blackListedWordsFileUrl);
-		this.urlServiceUtil.setRandomAlphabet(randomAlphabet);
+			boolean overwrite, String urlPrefix) throws ShortUrlException {
 		
 		if(longUrl==null || shortUrlDomain==null) {
-			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST);
+			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST, "longUrl or domain not present in request");
 		}
 		
 		if (!urlServiceUtil.isUrlValid(longUrl)) {
-			log.error("Url={} is Malformed", longUrl);
-			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST);
+			log.error(String.format("Url=%s is Malformed", longUrl));
+			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST, "Invalid longUrl provided in request");
 
 		}
 		
 		if (!urlServiceUtil.isExpiryDurationValid(expiryDuration)) {
-			log.error("Duration={} is Invalid for businessUUID={} , longUrl={}", expiryDuration, businessUUID, longUrl);
-			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST);
+			log.error(String.format("Duration=%d is Invalid for businessUUID=%s , longUrl=%s", expiryDuration, businessUUID, longUrl));
+			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST, "Invalid expiryDuration provided in request");
 
 		}
 		
 		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
 		
-		List<UrlDetails> existingShortUrls = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUID(longUrl, businessUUID);
+		List<UrlDetails> existingShortUrls = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
 		
 		if (!(existingShortUrls.isEmpty())) {
 			
 			UrlDetails existingShortUrl = existingShortUrls.get(0);
 			
-			log.info("ShortUrl={} already present for longUrl={} and businessUUID={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID());
+			log.info(String.format("ShortUrl=%s already present for longUrl=%s and businessUUID=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID()));
 			
 			if(overwrite) {
 				if (expiryDate.before(existingShortUrl.getExpiryDateTime())) {
-					log.error("The provided expiryDate for the shortUrl = {} is before the existing expiryDate", existingShortUrl.getShortUrl());
+					log.error(String.format("The provided expiryDate for shortUrl=%s is before the existing expiryDate", existingShortUrl.getShortUrl()));
 				}
 				
 				
-				log.warn("overwriting existing shortUrl details of shortUrl = {}", existingShortUrl.getShortUrl());
+				log.warn(String.format("overwriting existing shortUrl details of shortUrl = %s", existingShortUrl.getShortUrl()));
 				existingShortUrl.setExpiryDateTime(expiryDate);
 				existingShortUrl.setAdditionalParams(additionalParams);
 			}
 			
 			else {
 				if (expiryDate.after(existingShortUrl.getExpiryDateTime())) {
-					log.info("Extending expiryDate of shortUrl={} for longUrl={} and businessUUID={}", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID());
+					log.info(String.format("Extending expiryDate of shortUrl=%s for longUrl=%s and businessUUID=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID()));
 					existingShortUrl.setExpiryDateTime(expiryDate);
 				}
 			}
+			try {
+				urlRepository.saveUrl(existingShortUrl);
+			}
+			catch(ShortUrlException e) {
+				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to update the url details in the database");
+			}
 			
-			urlRepository.saveUrl(existingShortUrl);
 			return new ShortUrl(existingShortUrl.getShortUrl(), existingShortUrl.getExpiryDateTime());
 		}
 		
-		log.info("Creating a new shortUrl for longUrl={} and businessUUID={}", longUrl, businessUUID);
+		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		
-		long randomId;
-		String shortUrlHash;
-
-		do {
-			randomId = urlServiceUtil.getRandomId(hashLength);
-
-			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
-
-		} while (!urlServiceUtil.isHashValid(shortUrlHash));
+		AvailableHashPool hashPool = availableHashPoolAdapter.fetchValidShortUrlHash();
+		if(hashPool == null) {
+			log.error("All hashes have been exhausted. Generate new ones to keep the microservice running.");
+			throw new ShortUrlException(UrlErrorCodes.HASHES_EXHAUSTED, "Unique hashes not available in pool");
+		}
+		String shortUrlHash = hashPool.getShortUrlHash();
+		availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
 		
-		String shortUrl = shortUrlDomain + "/" + urlPrefix + "/" + shortUrlHash;
+		if(shortUrlDomain != null && !shortUrlDomain.isEmpty() && shortUrlDomain.charAt(shortUrlDomain.length()-1)!='/') {
+			shortUrlDomain += '/';
+		}
+		if(urlPrefix != null && !urlPrefix.isEmpty() && urlPrefix.charAt(urlPrefix.length()-1)!='/') {
+			urlPrefix += '/';
+		}
+		String shortUrl = shortUrlDomain + urlPrefix + shortUrlHash;
 		
 		Date currentDateTime = new Date();
-		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, longUrl, shortUrl, currentDateTime, expiryDate, businessUUID,
+		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, shortUrl, currentDateTime, expiryDate, businessUUID,
 				additionalParams, currentDateTime, true);
 		
-		urlRepository.saveUrl(shortUrlDetails);
+		try {
+			urlRepository.saveUrl(shortUrlDetails);
+		}
+		catch(ShortUrlException e) {
+			throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to save the url details to database");
+		}
 		
 		return new ShortUrl(shortUrl, expiryDate);
 		
@@ -146,18 +162,18 @@ public class UrlService {
 		if (existingUrlDetails==null) {
 			
 			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
-			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND, "Long URL not found for the given short URL");
 
 		}
 
 		if(existingUrlDetails.getExpiryDateTime().before(new Date())) {
 			
 			log.info(" Short Url for shortUrlHash={} is expired ", shortUrlHash);
-			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND, "Long URL not found for the given short URL");
 
 		}
 		
-		log.info("shortUrl for ShortUrlHash= {} redirects to longUrl= {}", shortUrlHash, existingUrlDetails.getLongUrl());
+		log.info(String.format("shortUrl for shortUrlHash=%s redirects to longUrl=%s", shortUrlHash, existingUrlDetails.getLongUrl()));
 
 		return replaceUrlInRedirectingHtmlTemplate(existingUrlDetails.getLongUrl());
 	}
@@ -167,6 +183,7 @@ public class UrlService {
 		UrlDetails existingUrlDetails = shortUrlCacheAdapter.fetchUrlDetailsFromCache(shortUrlHash);
 		
 		if(existingUrlDetails != null) {
+			log.info("Fetching existing short url details from cache for shortUrlHash="+shortUrlHash);
 			return existingUrlDetails;
 		}
 		
@@ -174,15 +191,15 @@ public class UrlService {
 
 		if (existingUrlDetails==null) {
 			
-			log.info("shortUrlHash={} is not present in DB ", shortUrlHash);
-			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+			log.info(String.format("shortUrlHash=%s is not present in DB ", shortUrlHash));
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND, "Long URL not found for the given short URL");
 
 		}
 
 		if(existingUrlDetails.getExpiryDateTime().before(new Date())) {
 			
-			log.info(" Short Url for shortUrlHash={} is expired ", shortUrlHash);
-			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND);
+			log.info(String.format("Short Url for shortUrlHash=%s is expired ", shortUrlHash));
+			throw new ShortUrlNotFoundException(UrlErrorCodes.SHORT_URL_NOT_FOUND, "Long URL not found for the given short URL");
 
 		}
 		

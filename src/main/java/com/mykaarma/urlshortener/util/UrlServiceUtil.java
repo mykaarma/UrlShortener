@@ -8,6 +8,7 @@ import java.util.Date;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 public class UrlServiceUtil {
 	
+	@Value("${blacklisted_words_file_url}")
+	private String blackListedWordsFileUrl;
+	
+	@Value("${random_alphabet}")
+	private String randomAlphabet;
+	
+	
 	private ShortUrlDatabaseAdapter urlRepository;
 	
 	@Autowired
@@ -34,9 +42,7 @@ public class UrlServiceUtil {
 		this.urlRepository = urlRepository;
 	}
 	
-	private String blackListedWordsFileUrl = null;
 	private static final String DEFAULT_RANDOM_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
-	private String randomAlphabet = DEFAULT_RANDOM_ALPHABET;
 	private static String[] blackListedWords = null;
 	SecureRandom sr = new SecureRandom();
 
@@ -153,8 +159,6 @@ public class UrlServiceUtil {
 	 */
 	public boolean isHashValid(String hash) throws ShortUrlException {
 		
-		if(urlRepository.existsByShortUrlHash(hash)) {return false;}
-		
 		if(hash.length()>20||hash.isEmpty()) {return false;}
 		for(int i=0;i<hash.length();i++)
 		{
@@ -200,7 +204,7 @@ public class UrlServiceUtil {
 		}
 		catch(Exception e)
 		{
-			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR);
+			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Internal Server Error");
 		}
 	
 		
