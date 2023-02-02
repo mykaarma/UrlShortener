@@ -46,15 +46,15 @@ public class HashGenerationJob {
 		int availableHashCount = availableHashPoolAdapter.countAvailableHashes();
 		log.info(String.format("Number of available hashes=%d", availableHashCount));
 		if(availableHashCount < hashCountThreshold) {
-			generateHashes();
+			generateHashes(hashCountThreshold - availableHashCount);
 		}
 	}
 	
-	private void generateHashes() throws ShortUrlException {
+	private void generateHashes(int count) throws ShortUrlException {
 		
 		log.info("Running job for generating hashes");
 		int numberOfHashesGenerated = 0;
-		while(numberOfHashesGenerated < hashGenerationRate) {			
+		while(numberOfHashesGenerated < count) {			
 			long randomId = urlServiceUtil.getRandomId(hashLength);
 			String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
 			

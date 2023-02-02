@@ -85,7 +85,7 @@ public class UrlService {
 			
 			UrlDetails existingShortUrl = existingShortUrls.get(0);
 			
-			log.info(String.format("ShortUrl=%s already present for longUrl=%s and businessUUID=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID()));
+			log.info(String.format("ShortUrl=%s already present for longUrl=%s businessUUID=%s shortUrlDomain=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID(), existingShortUrl.getShortUrlDomain()));
 			
 			if(overwrite) {
 				if (expiryDate.before(existingShortUrl.getExpiryDateTime())) {
@@ -124,6 +124,9 @@ public class UrlService {
 		String shortUrlHash = hashPool.getShortUrlHash();
 		availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
 		
+		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
+				additionalParams, new Date(), true);
+		
 		if(shortUrlDomain != null && !shortUrlDomain.isEmpty() && shortUrlDomain.charAt(shortUrlDomain.length()-1)!='/') {
 			shortUrlDomain += '/';
 		}
@@ -132,9 +135,7 @@ public class UrlService {
 		}
 		String shortUrl = shortUrlDomain + urlPrefix + shortUrlHash;
 		
-		Date currentDateTime = new Date();
-		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, shortUrl, currentDateTime, expiryDate, businessUUID,
-				additionalParams, currentDateTime, true);
+		shortUrlDetails.setShortUrl(shortUrl);
 		
 		try {
 			urlRepository.saveUrl(shortUrlDetails);
