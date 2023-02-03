@@ -15,5 +15,5 @@ import lombok.Data;
 public class AvailableHashPool implements Serializable {
 
 	private String shortUrlHash;
-	private boolean isValid;
+	private boolean isAvailable;
 }

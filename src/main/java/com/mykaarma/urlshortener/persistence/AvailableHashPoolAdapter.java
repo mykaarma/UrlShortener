@@ -6,7 +6,7 @@ import com.mykaarma.urlshortener.model.AvailableHashPool;
 
 public interface AvailableHashPoolAdapter {
 
-	public AvailableHashPool fetchValidShortUrlHash() throws ShortUrlException;
+	public AvailableHashPool fetchAvailableShortUrlHash() throws ShortUrlException;
 	
 	public void addHashToPool(String shortUrlHash) throws ShortUrlException;
 	

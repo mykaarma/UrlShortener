@@ -12,7 +12,7 @@ import lombok.ToString;
 
 @Getter
 @Setter
-public class ShortUrlException extends Exception {
+public class ShortUrlException extends RuntimeException {
 	
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;

@@ -2,7 +2,6 @@ package com.mykaarma.urlshortener.scheduled;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -39,7 +38,6 @@ public class HashGenerationJob {
 		this.urlServiceUtil = urlServiceUtil;
 	}
 	
-	@Async
 	@Scheduled(cron = "${hash_generation_cron}")
 	public void runHashesGenerationJob() throws ShortUrlException {
 		
@@ -68,8 +66,7 @@ public class HashGenerationJob {
 		log.info("Hash generation job completed");
 		
 	}
-	
-	@Async
+
 	@Scheduled(cron = "${hash_deletion_cron}")
 	public void removeUsedHashesFromPool() throws ShortUrlException {
 		

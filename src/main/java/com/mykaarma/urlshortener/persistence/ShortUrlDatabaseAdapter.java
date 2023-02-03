@@ -11,9 +11,9 @@ public interface ShortUrlDatabaseAdapter {
 	
 	public void saveUrl(UrlDetails urlDetails) throws ShortUrlException;
 	
-	public List<UrlDetails> getUrlDetailsByShortUrlHash(String shortUrlHash) throws ShortUrlException;
+	public UrlDetails getUrlDetailsByShortUrlHash(String shortUrlHash) throws ShortUrlException;
 	
-	public List<UrlDetails> getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(String longUrl, String businessUUID, String shortUrlDomain) throws ShortUrlException;
+	public UrlDetails getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(String longUrl, String businessUUID, String shortUrlDomain) throws ShortUrlException;
 	
 	public void updateLastAccessedTimestamp(UrlDetails urlDetails, Date lastAccessedTimestamp) throws ShortUrlException;
 	

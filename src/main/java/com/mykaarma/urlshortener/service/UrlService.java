@@ -79,11 +79,9 @@ public class UrlService {
 		
 		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
 		
-		List<UrlDetails> existingShortUrls = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
+		UrlDetails existingShortUrl = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
 		
-		if (!(existingShortUrls.isEmpty())) {
-			
-			UrlDetails existingShortUrl = existingShortUrls.get(0);
+		if (existingShortUrl != null) {
 			
 			log.info(String.format("ShortUrl=%s already present for longUrl=%s businessUUID=%s shortUrlDomain=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID(), existingShortUrl.getShortUrlDomain()));
 			
@@ -116,7 +114,7 @@ public class UrlService {
 		
 		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		
-		AvailableHashPool hashPool = availableHashPoolAdapter.fetchValidShortUrlHash();
+		AvailableHashPool hashPool = availableHashPoolAdapter.fetchAvailableShortUrlHash();
 		if(hashPool == null) {
 			log.error("All hashes have been exhausted. Generate new ones to keep the microservice running.");
 			throw new ShortUrlException(UrlErrorCodes.HASHES_EXHAUSTED, "Unique hashes not available in pool");
@@ -240,11 +238,8 @@ public class UrlService {
 	 */
 	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
 
-		List<UrlDetails> existingShortUrls = urlRepository.getUrlDetailsByShortUrlHash(shortUrlHash);
-		if(existingShortUrls.isEmpty()) {
-			return null;
-		}
-		return existingShortUrls.get(0);
+		UrlDetails existingShortUrl = urlRepository.getUrlDetailsByShortUrlHash(shortUrlHash);
+		return existingShortUrl;
 	}
 	
 }
