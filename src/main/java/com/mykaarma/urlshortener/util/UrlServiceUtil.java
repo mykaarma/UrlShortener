@@ -7,16 +7,12 @@ import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlInternalServerException;
-import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 
 import lombok.Setter;
