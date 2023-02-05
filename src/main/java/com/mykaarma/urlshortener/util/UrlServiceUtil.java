@@ -3,7 +3,6 @@ package com.mykaarma.urlshortener.util;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.Random;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
@@ -105,7 +104,7 @@ public class UrlServiceUtil {
 	public long getRandomId(int hashLength) throws ShortUrlException {
 		
 		long upperBound = (long)Math.pow(64, hashLength) - 1;
-		long id = sr.nextLong(upperBound);
+		long id = sr.longs(1, upperBound).findFirst().getAsLong();
 		return id;
 	}
 	
