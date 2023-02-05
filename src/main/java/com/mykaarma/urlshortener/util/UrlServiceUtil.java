@@ -3,6 +3,7 @@ package com.mykaarma.urlshortener.util;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Random;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
