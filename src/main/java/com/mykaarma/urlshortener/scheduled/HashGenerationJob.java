@@ -14,6 +14,7 @@ import com.mykaarma.urlshortener.persistence.HashArchiveAdapter;
 import com.mykaarma.urlshortener.service.RedisLockService;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -41,6 +42,11 @@ public class HashGenerationJob {
 		this.hashArchiveAdapter = hashArchiveAdapter;
 		this.urlServiceUtil = urlServiceUtil;
 		this.redisLockService = redisLockService;
+	}
+	
+	@PostConstruct
+	public void onStartup() {
+		runHashesGenerationJob();
 	}
 	
 	@Scheduled(cron = "${hash_generation_cron}")
