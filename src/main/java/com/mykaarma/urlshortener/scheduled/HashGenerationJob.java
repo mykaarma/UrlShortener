@@ -14,7 +14,6 @@ import com.mykaarma.urlshortener.persistence.HashArchiveAdapter;
 import com.mykaarma.urlshortener.service.RedisLockService;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -44,11 +43,6 @@ public class HashGenerationJob {
 		this.redisLockService = redisLockService;
 	}
 	
-	@PostConstruct
-	public void onStartup() {
-		runHashesGenerationJob();
-	}
-	
 	@Scheduled(cron = "${hash_generation_cron}")
 	public void runHashesGenerationJob() throws ShortUrlException {
 		
@@ -59,7 +53,10 @@ public class HashGenerationJob {
                 log.info(" Failed to acquire lock");
                 return;
             }
-            generateHashes();
+            int availableHashCount = availableHashPoolAdapter.countAvailableHashes();
+            log.info(String.format("Number of available hashes=%d", availableHashCount));
+            int count = hashCountThreshold - availableHashCount;
+            generateHashes(count);
         } catch (Exception e) {
             log.error("error while running HashGenerationJob", e);
         } finally {
@@ -68,28 +65,22 @@ public class HashGenerationJob {
         }
 	}
 	
-	private void generateHashes() throws ShortUrlException {
+	public void generateHashes(int count) throws ShortUrlException {
 		
-		int availableHashCount = availableHashPoolAdapter.countAvailableHashes();
-		log.info(String.format("Number of available hashes=%d", availableHashCount));
-		
-		if(availableHashCount < hashCountThreshold) {
-			int count = hashCountThreshold - availableHashCount;
-			log.info("Running job for generating hashes");
-			int numberOfHashesGenerated = 0;
-			while(numberOfHashesGenerated < count) {			
-				long randomId = urlServiceUtil.getRandomId(hashLength);
-				String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+		log.info("Running job for generating hashes");
+		int numberOfHashesGenerated = 0;
+		while(numberOfHashesGenerated < count) {			
+			long randomId = urlServiceUtil.getRandomId(hashLength);
+			String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+			
+			if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
 				
-				if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
-					
-					availableHashPoolAdapter.addHashToPool(shortUrlHash);
-					hashArchiveAdapter.addHashToArchive(shortUrlHash);
-					numberOfHashesGenerated++;
-				}
+				availableHashPoolAdapter.addHashToPool(shortUrlHash);
+				hashArchiveAdapter.addHashToArchive(shortUrlHash);
+				numberOfHashesGenerated++;
 			}
-			log.info("Hash generation job completed");
 		}
+		log.info("Hash generation job completed");
 		
 	}
 
