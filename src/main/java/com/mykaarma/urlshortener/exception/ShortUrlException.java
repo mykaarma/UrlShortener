@@ -24,13 +24,13 @@ public class ShortUrlException extends RuntimeException {
 	private String errorData;
 
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlException
 	 */
 	public ShortUrlException() {
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlException
 	 *
 	 * @param errorEnum the error enum
 	 * @param errorDesc the error desc
@@ -41,7 +41,7 @@ public class ShortUrlException extends RuntimeException {
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlException
 	 *
 	 * @param errorDTO the error DTO
 	 * @param errorDesc the error desc

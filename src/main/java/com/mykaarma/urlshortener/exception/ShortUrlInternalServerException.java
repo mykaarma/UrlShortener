@@ -21,13 +21,13 @@ public class ShortUrlInternalServerException extends ShortUrlException{
 	private String errorData;
 
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlInternalServerException
 	 */
 	public ShortUrlInternalServerException() {
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlInternalServerException
 	 *
 	 * @param errorEnum the error enum
 	 * @param errorDesc the error desc
@@ -38,7 +38,7 @@ public class ShortUrlInternalServerException extends ShortUrlException{
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new ShortUrlInternalServerException
 	 *
 	 * @param errorDTO the error DTO
 	 * @param errorDesc the error desc

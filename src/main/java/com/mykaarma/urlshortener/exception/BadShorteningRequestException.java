@@ -20,13 +20,13 @@ public class BadShorteningRequestException extends ShortUrlException{
 	private String errorData;
 
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new BadShorteningRequestException
 	 */
 	public BadShorteningRequestException() {
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new BadShorteningRequestException
 	 *
 	 * @param errorEnum the error enum
 	 * @param errorDesc the error desc
@@ -37,7 +37,7 @@ public class BadShorteningRequestException extends ShortUrlException{
 	}
 	
 	/**
-	 * Instantiates a new ShortUrlNotFound exception.
+	 * Instantiates a new BadShorteningRequestException
 	 *
 	 * @param errorDTO the error DTO
 	 * @param errorDesc the error desc
