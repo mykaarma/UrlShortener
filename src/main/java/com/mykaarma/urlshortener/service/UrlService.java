@@ -131,9 +131,7 @@ public class UrlService {
 		if(urlPrefix != null && !urlPrefix.isEmpty() && urlPrefix.charAt(urlPrefix.length()-1)!='/') {
 			urlPrefix += '/';
 		}
-		else {
-			urlPrefix = "";
-		}
+
 		String shortUrl = shortUrlDomain + urlPrefix + shortUrlHash;
 		
 		shortUrlDetails.setShortUrl(shortUrl);
