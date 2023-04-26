@@ -26,7 +26,7 @@ public class UrlServiceUtil {
 	@Value("${blacklisted_words_file_url}")
 	private String blackListedWordsFileUrl;
 	
-	@Value("${random_alphabet}")
+	@Value("${random_alphabet:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}")
 	private String randomAlphabet;
 	
 	
@@ -38,7 +38,6 @@ public class UrlServiceUtil {
 		this.urlRepository = urlRepository;
 	}
 	
-	private static final String DEFAULT_RANDOM_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	private static String[] blackListedWords = null;
 	SecureRandom sr = new SecureRandom();
 
@@ -103,7 +102,7 @@ public class UrlServiceUtil {
 	 */
 	public long getRandomId(int hashLength) throws ShortUrlException {
 		
-		long upperBound = (long)Math.pow(DEFAULT_RANDOM_ALPHABET.length(), hashLength) - 1;
+		long upperBound = (long)Math.pow(randomAlphabet.length(), hashLength) - 1;
 		long id = sr.longs(1, upperBound).findFirst().getAsLong();
 		return id;
 	}
@@ -116,13 +115,10 @@ public class UrlServiceUtil {
 	 * @return hash
 	 */
 	public String convertIdToHash(long id, int hashLength) {
-		if(randomAlphabet==null) {
-			randomAlphabet = DEFAULT_RANDOM_ALPHABET;
-		}
 		StringBuilder hash = new StringBuilder();
 		while (id > 0) {
-			hash.insert(0, randomAlphabet.charAt((int) (id % DEFAULT_RANDOM_ALPHABET.length())));
-			id = id / DEFAULT_RANDOM_ALPHABET.length();
+			hash.insert(0, randomAlphabet.charAt((int) (id % randomAlphabet.length())));
+			id = id / randomAlphabet.length();
         }
         while(hash.length() < hashLength) {
         	hash.insert(0, randomAlphabet.charAt(0));
@@ -140,7 +136,7 @@ public class UrlServiceUtil {
 	{
 		long id=0;
 		 for (int i = 0; i < hash.length(); i++) {
-	            id = id * DEFAULT_RANDOM_ALPHABET.length() + randomAlphabet.indexOf(hash.charAt(i));
+	            id = id * randomAlphabet.length() + randomAlphabet.indexOf(hash.charAt(i));
 	        }
 		 return id;
 		
