@@ -26,7 +26,7 @@ public class UrlServiceUtil {
 	@Value("${blacklisted_words_file_url}")
 	private String blackListedWordsFileUrl;
 	
-	@Value("${random_alphabet}")
+	@Value("${random_alphabet:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}")
 	private String randomAlphabet;
 	
 	
@@ -38,7 +38,6 @@ public class UrlServiceUtil {
 		this.urlRepository = urlRepository;
 	}
 	
-	private static final String DEFAULT_RANDOM_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 	private static String[] blackListedWords = null;
 	SecureRandom sr = new SecureRandom();
 
@@ -103,7 +102,7 @@ public class UrlServiceUtil {
 	 */
 	public long getRandomId(int hashLength) throws ShortUrlException {
 		
-		long upperBound = (long)Math.pow(64, hashLength) - 1;
+		long upperBound = (long)Math.pow(randomAlphabet.length(), hashLength) - 1;
 		long id = sr.longs(1, upperBound).findFirst().getAsLong();
 		return id;
 	}
@@ -116,13 +115,10 @@ public class UrlServiceUtil {
 	 * @return hash
 	 */
 	public String convertIdToHash(long id, int hashLength) {
-		if(randomAlphabet==null) {
-			randomAlphabet = DEFAULT_RANDOM_ALPHABET;
-		}
 		StringBuilder hash = new StringBuilder();
 		while (id > 0) {
-			hash.insert(0, randomAlphabet.charAt((int) (id % 64)));
-			id = id / 64;
+			hash.insert(0, randomAlphabet.charAt((int) (id % randomAlphabet.length())));
+			id = id / randomAlphabet.length();
         }
         while(hash.length() < hashLength) {
         	hash.insert(0, randomAlphabet.charAt(0));
@@ -140,7 +136,7 @@ public class UrlServiceUtil {
 	{
 		long id=0;
 		 for (int i = 0; i < hash.length(); i++) {
-	            id = id * 64 + randomAlphabet.indexOf(hash.charAt(i));
+	            id = id * randomAlphabet.length() + randomAlphabet.indexOf(hash.charAt(i));
 	        }
 		 return id;
 		
@@ -158,7 +154,7 @@ public class UrlServiceUtil {
 		if(hash.length()>20||hash.isEmpty()) {return false;}
 		for(int i=0;i<hash.length();i++)
 		{
-			if(!((hash.charAt(i)>='a'&&hash.charAt(i)<='z')||(hash.charAt(i)>='A'&&hash.charAt(i)<='Z')||(hash.charAt(i)>='0'&&hash.charAt(i)<='9')||(hash.charAt(i)=='+')||(hash.charAt(i)=='-')))
+			if(!((hash.charAt(i)>='a'&&hash.charAt(i)<='z')||(hash.charAt(i)>='A'&&hash.charAt(i)<='Z')||(hash.charAt(i)>='0'&&hash.charAt(i)<='9')))
 			{
 				return false;
 			}
