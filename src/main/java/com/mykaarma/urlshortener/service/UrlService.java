@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
 
 import lombok.extern.slf4j.Slf4j;
+import org.yaml.snakeyaml.constructor.DuplicateKeyException;
 
 @Service
 @Slf4j
@@ -125,7 +127,7 @@ public class UrlService {
 		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
 				additionalParams, new Date(), true);
 		
-		if(shortUrlDomain != null && !shortUrlDomain.isEmpty() && shortUrlDomain.charAt(shortUrlDomain.length()-1)!='/') {
+		if(!shortUrlDomain.isEmpty() && shortUrlDomain.charAt(shortUrlDomain.length() - 1) != '/') {
 			shortUrlDomain += '/';
 		}
 		if(urlPrefix != null && !urlPrefix.isEmpty() && urlPrefix.charAt(urlPrefix.length()-1)!='/') {
@@ -142,6 +144,13 @@ public class UrlService {
 		try {
 			urlRepository.saveUrl(shortUrlDetails);
 		}
+		catch (ShortUrlDuplicateException e)
+		{
+			log.info(String.format("Mongo Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
+			int retryCount=1;
+			shortUrlDetails = shortUrlRetry(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount);
+
+		}
 		catch(ShortUrlException e) {
 			throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to save the url details to database");
 		}
@@ -149,7 +158,61 @@ public class UrlService {
 		return shortUrlDetails;
 		
 	}
-	
+
+	private UrlDetails shortUrlRetry(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount) {
+
+		log.info(String.format("Creating a new shortUrl using retry method  for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
+
+		AvailableHashPool hashPool = availableHashPoolAdapter.fetchAvailableShortUrlHash();
+		if(hashPool == null) {
+			log.error("All hashes have been exhausted. Generate new ones to keep the microservice running.");
+			throw new ShortUrlException(UrlErrorCodes.HASHES_EXHAUSTED, "Unique hashes not available in pool");
+		}
+		String shortUrlHash = hashPool.getShortUrlHash();
+		availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
+
+		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
+				additionalParams, new Date(), true);
+
+		if(!shortUrlDomain.isEmpty() && shortUrlDomain.charAt(shortUrlDomain.length() - 1) != '/') {
+			shortUrlDomain += '/';
+		}
+		if(urlPrefix != null && !urlPrefix.isEmpty() && urlPrefix.charAt(urlPrefix.length()-1)!='/') {
+			urlPrefix += '/';
+		}
+		else{
+			urlPrefix = "";
+		}
+
+		String shortUrl = shortUrlDomain + urlPrefix + shortUrlHash;
+
+		shortUrlDetails.setShortUrl(shortUrl);
+
+		try {
+			urlRepository.saveUrl(shortUrlDetails);
+		}
+		catch (ShortUrlDuplicateException e)
+		{
+			log.info(String.format("Mongo Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
+			if(retryCount ==6)
+			{
+				log.error("Failed to create shortUrl even after retries for long url=%s",longUrl);
+				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl");
+			}
+			else {
+				shortUrlDetails = shortUrlRetry(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount+1);
+			}
+
+
+		}
+		catch(ShortUrlException e) {
+			throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to save the url details to database");
+		}
+
+		return shortUrlDetails;
+	}
+
+
 	/**
 	 * Returns the HTML response for redirecting to the long URL from the short URL hash
 	 * 
