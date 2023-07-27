@@ -154,7 +154,7 @@ public class UrlService {
 		}
 		catch (ShortUrlDuplicateException e)
 		{
-			log.info(String.format("Mongo Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
+			log.info(String.format("DuplicateHashKeyException Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
 			if(retryCount ==6)
 			{
 				log.error("Failed to create shortUrl even after retries for long url=%s",longUrl);
