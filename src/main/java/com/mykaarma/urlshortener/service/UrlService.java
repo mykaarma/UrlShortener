@@ -157,7 +157,7 @@ public class UrlService {
 			log.info(String.format("DuplicateHashKeyException Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
 			if(retryCount ==6)
 			{
-				log.error("Failed to create shortUrl even after retries for long url=%s",longUrl);
+				log.error("Failed to create shortUrl even after retries for long url={} with exception={}",longUrl,e);
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl");
 			}
 			else {
