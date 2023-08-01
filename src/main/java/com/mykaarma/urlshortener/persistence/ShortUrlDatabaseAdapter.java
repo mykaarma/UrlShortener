@@ -4,6 +4,7 @@ package com.mykaarma.urlshortener.persistence;
 import java.util.Date;
 import java.util.List;
 
+import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.model.UrlDetails;
 
