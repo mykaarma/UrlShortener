@@ -114,15 +114,44 @@ public class UrlService {
 		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		int retryCount = 1;
 		UrlDetails shortUrlDetails;
-		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount);
+		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite);
 
 		return shortUrlDetails;
 
 	}
 
-	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount) {
+	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite) {
 
 		log.info(String.format("Creating a new shortUrl using retry method  for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
+		UrlDetails existingShortUrl = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
+
+		if (existingShortUrl != null) {
+
+			log.info(String.format("ShortUrl=%s already present for longUrl=%s businessUUID=%s shortUrlDomain=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID(), existingShortUrl.getShortUrlDomain()));
+
+			if (overwrite) {
+				if (expiryDate.before(existingShortUrl.getExpiryDateTime())) {
+					log.error(String.format("The provided expiryDate for shortUrl=%s is before the existing expiryDate", existingShortUrl.getShortUrl()));
+				}
+
+
+				log.warn(String.format("overwriting existing shortUrl details of shortUrl = %s", existingShortUrl.getShortUrl()));
+				existingShortUrl.setExpiryDateTime(expiryDate);
+				existingShortUrl.setAdditionalParams(additionalParams);
+			} else {
+				if (expiryDate.after(existingShortUrl.getExpiryDateTime())) {
+					log.info(String.format("Extending expiryDate of shortUrl=%s for longUrl=%s and businessUUID=%s", existingShortUrl.getShortUrl(), existingShortUrl.getLongUrl(), existingShortUrl.getBusinessUUID()));
+					existingShortUrl.setExpiryDateTime(expiryDate);
+				}
+			}
+			try {
+				urlRepository.saveUrl(existingShortUrl);
+			} catch (ShortUrlException e) {
+				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to update the url details in the database");
+			}
+
+			return existingShortUrl;
+		}
 
 		AvailableHashPool hashPool = availableHashPoolAdapter.fetchAvailableShortUrlHash();
 		if(hashPool == null) {
@@ -161,7 +190,7 @@ public class UrlService {
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl");
 			}
 			else {
-				shortUrlDetails = createShortUrl(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount+1);
+				shortUrlDetails = createShortUrl(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount+1,overwrite);
 			}
 
 
