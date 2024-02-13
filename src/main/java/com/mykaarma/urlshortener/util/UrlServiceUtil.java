@@ -189,13 +189,12 @@ public class UrlServiceUtil {
 			
 		String blackListedWordsList = null;
 		try {
-		URL url = new URL(this.blackListedWordsFileUrl);
-		
-		
-		blackListedWordsList = IOUtils.toString(url.openStream(), StandardCharsets.UTF_8);
+			URL url = new URL(this.blackListedWordsFileUrl);
+			blackListedWordsList = IOUtils.toString(url.openStream(), StandardCharsets.UTF_8);
 		}
 		catch(Exception e)
 		{
+			log.error("Error in blackListedWords: ", e);
 			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Internal Server Error");
 		}
 	
