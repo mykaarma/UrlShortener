@@ -194,7 +194,7 @@ public class UrlServiceUtil {
 		}
 		catch(Exception e)
 		{
-			log.error("Error in blackListedWords: ", e);
+			log.error("Error in fetching blackListedWords file from URL = {}", this.blackListedWordsFileUrl, e);
 			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Internal Server Error");
 		}
 	
