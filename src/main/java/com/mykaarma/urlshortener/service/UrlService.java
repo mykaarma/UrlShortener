@@ -158,9 +158,6 @@ public class UrlService {
 		shortUrlDetails.setShortUrl(shortUrl);
 
 		try {
-			if (retryCount < 6) {
-				throw new ShortUrlDuplicateException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl in try number = " + retryCount);
-			}
 			urlRepository.saveUrl(shortUrlDetails);
 		}
 		catch (ShortUrlDuplicateException e)
