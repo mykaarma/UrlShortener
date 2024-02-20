@@ -158,14 +158,17 @@ public class UrlService {
 		shortUrlDetails.setShortUrl(shortUrl);
 
 		try {
+			if (retryCount <= 6) {
+				throw new ShortUrlDuplicateException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl in try number = " + retryCount);
+			}
 			urlRepository.saveUrl(shortUrlDetails);
 		}
 		catch (ShortUrlDuplicateException e)
 		{
-			log.info(String.format("DuplicateKeyException Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s",longUrl, businessUUID, shortUrlDomain));
+			log.info(String.format("DuplicateKeyException Exception Occurred, retrying creating short url for longUrl=%s businessUUID=%s domainPurpose=%s requestId=%s",longUrl, businessUUID, shortUrlDomain, requestId));
 			if(retryCount ==6)
 			{
-				log.error("Failed to create shortUrl even after retries for long url={} with exception={}",longUrl,e);
+				log.error("Failed to create shortUrl even after retries for long url={} with exception={} for request id={}",longUrl,e, requestId);
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl");
 			}
 			else {
