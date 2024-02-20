@@ -89,7 +89,7 @@ public class UrlService {
 		return existingShortUrl;
 	}
 	public UrlDetails shortenUrl(String longUrl, String shortUrlDomain, long expiryDuration, String businessUUID, Map<String, String> additionalParams,
-			boolean overwrite, String urlPrefix) throws ShortUrlException {
+			boolean overwrite, String urlPrefix, String requestId) throws ShortUrlException {
 
 		if (longUrl == null || shortUrlDomain == null) {
 			throw new BadShorteningRequestException(UrlErrorCodes.SHORT_URL_BAD_REQUEST, "longUrl or domain not present in request");
@@ -115,7 +115,7 @@ public class UrlService {
 		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		int retryCount = 1;
 		UrlDetails shortUrlDetails;
-		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite);
+		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite, requestId);
 		return shortUrlDetails;
 
 
@@ -124,8 +124,8 @@ public class UrlService {
 
 	}
 
-	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite) {
-
+	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite, String requestId) {
+		log.info("Try number={} for request Id={}", retryCount, requestId);
 		log.info(String.format("Creating a new shortUrl using retry method  for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		UrlDetails existingShortUrl = checkExisting(longUrl,shortUrlDomain,businessUUID,additionalParams,overwrite,expiryDate);
 		if(existingShortUrl != null)
@@ -169,7 +169,7 @@ public class UrlService {
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl");
 			}
 			else {
-				shortUrlDetails = createShortUrl(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount+1,overwrite);
+				shortUrlDetails = createShortUrl(shortUrlDomain, longUrl,expiryDate, businessUUID,additionalParams,urlPrefix,retryCount+1,overwrite, requestId);
 			}
 
 
