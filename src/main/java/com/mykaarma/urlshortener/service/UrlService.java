@@ -126,6 +126,9 @@ public class UrlService {
 
 	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite, String requestId) {
 		log.info("Try number={} for request Id={}", retryCount, requestId);
+		if (retryCount < 6) {
+			throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to Create ShortUrl in try number = " + retryCount);
+		}
 		log.info(String.format("Creating a new shortUrl using retry method  for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
 		UrlDetails existingShortUrl = checkExisting(longUrl,shortUrlDomain,businessUUID,additionalParams,overwrite,expiryDate);
 		if(existingShortUrl != null)
