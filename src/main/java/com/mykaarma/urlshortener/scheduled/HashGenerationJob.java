@@ -103,4 +103,17 @@ public class HashGenerationJob {
                 redisLockService.unlock(lock);
         }
 	}
+
+	public String getHash(){
+		long randomId = urlServiceUtil.getRandomId(hashLength);
+		String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+
+		while(!urlServiceUtil.isHashValid(shortUrlHash) || hashArchiveAdapter.isHashUsed(shortUrlHash)) {
+			randomId = urlServiceUtil.getRandomId(hashLength);
+			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+		}
+		availableHashPoolAdapter.addHashToPool(shortUrlHash);
+		hashArchiveAdapter.addHashToArchive(shortUrlHash);
+		return shortUrlHash;
+	}
 }
