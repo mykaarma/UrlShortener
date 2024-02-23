@@ -39,19 +39,15 @@ public class UrlService {
 
 	private HashGenerationJob hashGenerationJob;
 
-	private RedisLockService redisLockService;
-	@Value("${hash_generation_ondemand_count:1000}")
-	private int onDemandHashCount;
 	
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob, RedisLockService redisLockService) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.urlRepository = urlRepository;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
 		this.availableHashPoolAdapter = availableHashPoolAdapter;
 		this.hashGenerationJob = hashGenerationJob;
-		this.redisLockService = redisLockService;
 	}
 
 	/**
@@ -140,7 +136,7 @@ public class UrlService {
 		if(hashPool == null) {
 			log.warn("All hashes have been exhausted. Generate new ones to keep the microservice running.");
 			shortUrlHash = hashGenerationJob.getHash();
-			generateHashesAsync();
+			hashGenerationJob.generateHashesAsync();
 		} else {
 			shortUrlHash = hashPool.getShortUrlHash();
 			availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
@@ -187,25 +183,6 @@ public class UrlService {
 		}
 
 		return shortUrlDetails;
-	}
-
-	@Async
-	private void generateHashesAsync(){
-		Lock lock = null;
-		try {
-			lock = redisLockService.tryLockOnEntity("runHashGeneration", RegistryKey.HASH_GENERATION_ONDEMAND);
-			if (lock == null || !lock.tryLock()) {
-				log.info(" Failed to acquire lock");
-				return;
-			}
-			hashGenerationJob.generateHashes(onDemandHashCount);
-		} catch (Exception e){
-			log.error("error while running HashGeneration OnDemand", e);
-		} finally {
-			if(lock != null) {
-				redisLockService.unlock(lock);
-			}
-		}
 	}
 
 	/**

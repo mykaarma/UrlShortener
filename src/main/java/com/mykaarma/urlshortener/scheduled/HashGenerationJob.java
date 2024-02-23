@@ -4,6 +4,7 @@ import java.util.concurrent.locks.Lock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,9 @@ public class HashGenerationJob {
 	
 	@Value("${hash_length:8}")
 	private int hashLength;
+
+	@Value("${hash_generation_ondemand_count:1000}")
+	private int onDemandHashCount;
 	
 	private AvailableHashPoolAdapter availableHashPoolAdapter;
 	private HashArchiveAdapter hashArchiveAdapter;
@@ -64,7 +68,7 @@ public class HashGenerationJob {
                 redisLockService.unlock(lock);
         }
 	}
-	
+
 	public void generateHashes(int count) throws ShortUrlException {
 		
 		log.info("Running job for generating hashes");
@@ -128,6 +132,25 @@ public class HashGenerationJob {
 				redisLockService.unlock(lock);
 			}
 			log.info("Time taken to getHash for shortUrl is {}ms",System.currentTimeMillis()-t1);
+		}
+	}
+
+	@Async
+	public void generateHashesAsync(){
+		Lock lock = null;
+		try {
+			lock = redisLockService.tryLockOnEntity("runHashGeneration", RegistryKey.HASH_GENERATION_ONDEMAND);
+			if (lock == null || !lock.tryLock()) {
+				log.info(" Failed to acquire lock");
+				return;
+			}
+			generateHashes(onDemandHashCount);
+		} catch (Exception e){
+			log.error("error while running HashGeneration OnDemand", e);
+		} finally {
+			if(lock != null) {
+				redisLockService.unlock(lock);
+			}
 		}
 	}
 }
