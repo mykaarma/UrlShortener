@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
+import com.mykaarma.urlshortener.scheduled.HashGenerationJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,31 +32,28 @@ public class UrlService {
 	private ShortUrlCacheAdapter shortUrlCacheAdapter;
 	
 	private AvailableHashPoolAdapter availableHashPoolAdapter;
+
+	private HashGenerationJob hashGenerationJob;
 	
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.urlRepository = urlRepository;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
 		this.availableHashPoolAdapter = availableHashPoolAdapter;
+		this.hashGenerationJob = hashGenerationJob;
 	}
-	
+
 	/**
 	 * Creating a shortUrl for the provided longUrl and businessUUID
-	 * 
 	 * @param longUrl
 	 * @param shortUrlDomain
-	 * @param expiryDuration
 	 * @param businessUUID
 	 * @param additionalParams
 	 * @param overwrite
-	 * @param hashLength
-	 * @param blackListedWordsFileUrl
-	 * @param randomAlphabet
-	 * @param urlPrefix
-	 * @return UrlDetails
-	 * @throws ShortUrlException
+	 * @param expiryDate
+	 * @return
 	 */
 	private UrlDetails checkExisting(String longUrl, String shortUrlDomain, String businessUUID, Map<String, String> additionalParams,boolean overwrite, Date expiryDate)
 	{
@@ -133,13 +131,14 @@ public class UrlService {
 			return existingShortUrl;
 		}
 		AvailableHashPool hashPool = availableHashPoolAdapter.fetchAvailableShortUrlHash();
+		String shortUrlHash;
 		if(hashPool == null) {
-			log.error("All hashes have been exhausted. Generate new ones to keep the microservice running.");
-			throw new ShortUrlException(UrlErrorCodes.HASHES_EXHAUSTED, "Unique hashes not available in pool");
+			log.warn("All hashes have been exhausted. Generate new ones to keep the microservice running.");
+			shortUrlHash = hashGenerationJob.getHash();
+		} else {
+			shortUrlHash = hashPool.getShortUrlHash();
+			availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
 		}
-		String shortUrlHash = hashPool.getShortUrlHash();
-		availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
-
 		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
 				additionalParams, new Date(), true);
 
