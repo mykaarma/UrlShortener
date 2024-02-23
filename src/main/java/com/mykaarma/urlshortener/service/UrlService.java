@@ -116,10 +116,6 @@ public class UrlService {
 		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite, requestId);
 		return shortUrlDetails;
 
-
-
-
-
 	}
 
 	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite, String requestId) {

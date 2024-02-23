@@ -112,7 +112,6 @@ public class HashGenerationJob {
 			randomId = urlServiceUtil.getRandomId(hashLength);
 			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
 		}
-		availableHashPoolAdapter.addHashToPool(shortUrlHash);
 		hashArchiveAdapter.addHashToArchive(shortUrlHash);
 		return shortUrlHash;
 	}
