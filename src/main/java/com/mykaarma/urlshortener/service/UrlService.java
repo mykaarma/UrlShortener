@@ -135,6 +135,9 @@ public class UrlService {
 			shortUrlHash = hashPool.getShortUrlHash();
 			availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
 		}
+		if(shortUrlHash==null){
+			throw new ShortUrlException(UrlErrorCodes.HASH_NOT_FETCHED, UrlErrorCodes.HASH_NOT_FETCHED.getErrorDescription());
+		}
 		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
 				additionalParams, new Date(), true);
 

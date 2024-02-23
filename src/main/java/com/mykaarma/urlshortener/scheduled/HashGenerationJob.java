@@ -105,6 +105,7 @@ public class HashGenerationJob {
 	}
 
 	public String getHash(){
+		long t1 = System.currentTimeMillis();
 		long randomId = urlServiceUtil.getRandomId(hashLength);
 		String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
 
@@ -113,6 +114,7 @@ public class HashGenerationJob {
 			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
 		}
 		hashArchiveAdapter.addHashToArchive(shortUrlHash);
+		log.info("Time taken to getHash is {}ms",System.currentTimeMillis()-t1);
 		return shortUrlHash;
 	}
 }
