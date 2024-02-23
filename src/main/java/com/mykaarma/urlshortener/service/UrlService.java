@@ -2,10 +2,14 @@ package com.mykaarma.urlshortener.service;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
+import com.mykaarma.urlshortener.enums.RegistryKey;
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
 import com.mykaarma.urlshortener.scheduled.HashGenerationJob;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
@@ -34,15 +38,20 @@ public class UrlService {
 	private AvailableHashPoolAdapter availableHashPoolAdapter;
 
 	private HashGenerationJob hashGenerationJob;
+
+	private RedisLockService redisLockService;
+	@Value("${hash_generation_ondemand_count:1000}")
+	private int onDemandHashCount;
 	
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob, RedisLockService redisLockService) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.urlRepository = urlRepository;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
 		this.availableHashPoolAdapter = availableHashPoolAdapter;
 		this.hashGenerationJob = hashGenerationJob;
+		this.redisLockService = redisLockService;
 	}
 
 	/**
@@ -131,6 +140,7 @@ public class UrlService {
 		if(hashPool == null) {
 			log.warn("All hashes have been exhausted. Generate new ones to keep the microservice running.");
 			shortUrlHash = hashGenerationJob.getHash();
+			generateHashesAsync();
 		} else {
 			shortUrlHash = hashPool.getShortUrlHash();
 			availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
@@ -179,6 +189,24 @@ public class UrlService {
 		return shortUrlDetails;
 	}
 
+	@Async
+	private void generateHashesAsync(){
+		Lock lock = null;
+		try {
+			lock = redisLockService.tryLockOnEntity("runHashGeneration", RegistryKey.HASH_GENERATION_ONDEMAND);
+			if (lock == null || !lock.tryLock()) {
+				log.info(" Failed to acquire lock");
+				return;
+			}
+			hashGenerationJob.generateHashes(onDemandHashCount);
+		} catch (Exception e){
+			log.error("error while running HashGeneration OnDemand", e);
+		} finally {
+			if(lock != null) {
+				redisLockService.unlock(lock);
+			}
+		}
+	}
 
 	/**
 	 * Returns the HTML response for redirecting to the long URL from the short URL hash
