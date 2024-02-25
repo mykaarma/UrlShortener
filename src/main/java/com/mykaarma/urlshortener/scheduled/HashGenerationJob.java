@@ -59,6 +59,7 @@ public class HashGenerationJob {
                 log.info(" Failed to acquire lock");
                 return;
             }
+
             int availableHashCount = availableHashPoolAdapter.countAvailableHashes();
             log.info("[Before] Number of available hashes={}", availableHashCount);
             int count = hashCountThreshold - availableHashCount;

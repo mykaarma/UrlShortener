@@ -2,14 +2,9 @@ package com.mykaarma.urlshortener.service;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-
-import com.mykaarma.urlshortener.enums.RegistryKey;
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
 import com.mykaarma.urlshortener.scheduled.HashGenerationJob;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
