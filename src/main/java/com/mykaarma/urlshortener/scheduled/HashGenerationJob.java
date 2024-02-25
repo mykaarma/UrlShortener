@@ -51,7 +51,7 @@ public class HashGenerationJob {
 	
 	@Scheduled(cron = "${hash_generation_cron}")
 	public void runHashesGenerationJob() throws ShortUrlException {
-		
+		log.info("Hash generation job started");
 		Lock lock = null;
         try {
             lock = redisLockService.tryLockOnEntity("runHashGenerationJob", RegistryKey.HASH_GENERATION_JOB);
@@ -71,25 +71,32 @@ public class HashGenerationJob {
             if(lock != null)
                 redisLockService.unlock(lock);
         }
+		log.info("Hash generation job completed");
 	}
 
 	public void generateHashes(int count) throws ShortUrlException {
 		
 		log.info("Generating hashes in bulk count={}", count);
 		int numberOfHashesGenerated = 0;
-		while(numberOfHashesGenerated < count) {			
-			long randomId = urlServiceUtil.getRandomId(hashLength);
-			String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
-			
-			if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
-				
-				availableHashPoolAdapter.addHashToPool(shortUrlHash);
-				hashArchiveAdapter.addHashToArchive(shortUrlHash);
-				numberOfHashesGenerated++;
+		while(numberOfHashesGenerated < count) {
+			try {
+
+				long randomId = urlServiceUtil.getRandomId(hashLength);
+				String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+
+				if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
+
+					availableHashPoolAdapter.addHashToPool(shortUrlHash);
+					hashArchiveAdapter.addHashToArchive(shortUrlHash);
+					numberOfHashesGenerated++;
+				}
+
+			} catch (Exception e){
+				log.error("Error while generating/saving hash countToBeGenerated={} numberOfHashesGenerated={}",count,numberOfHashesGenerated, e);
+				count--;
 			}
 		}
-		log.info("Hash generation job completed");
-		
+		log.info("Generated hashes in bulk count={}", count);
 	}
 
 	@Scheduled(cron = "${hash_deletion_cron}")
