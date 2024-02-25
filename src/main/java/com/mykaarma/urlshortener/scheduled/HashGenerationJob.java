@@ -65,7 +65,7 @@ public class HashGenerationJob {
             if(count>0){
 				generateHashes(count);
 			} else{
-				log.info("Hash generation not required. Sufficient hashes are available in the pool.");
+				log.info("Hash generation not required. {} hashes are available in the pool.",hashCountThreshold);
 			}
 			availableHashCount = availableHashPoolAdapter.countAvailableHashes();
 			log.info("[After] Number of available hashes={}", availableHashCount);
