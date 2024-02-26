@@ -4,6 +4,8 @@ import java.util.concurrent.locks.Lock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@EnableAsync
 public class HashGenerationJob {
 
 	@Value("${hash_count_threshold:100000}")
@@ -28,6 +31,9 @@ public class HashGenerationJob {
 	
 	@Value("${hash_length:8}")
 	private int hashLength;
+
+	@Value("${hash_generation_ondemand_count:1000}")
+	private int onDemandHashCount;
 	
 	private AvailableHashPoolAdapter availableHashPoolAdapter;
 	private HashArchiveAdapter hashArchiveAdapter;
@@ -45,7 +51,7 @@ public class HashGenerationJob {
 	
 	@Scheduled(cron = "${hash_generation_cron}")
 	public void runHashesGenerationJob() throws ShortUrlException {
-		
+		log.info("Hash generation job started");
 		Lock lock = null;
         try {
             lock = redisLockService.tryLockOnEntity("runHashGenerationJob", RegistryKey.HASH_GENERATION_JOB);
@@ -53,35 +59,50 @@ public class HashGenerationJob {
                 log.info(" Failed to acquire lock");
                 return;
             }
+
             int availableHashCount = availableHashPoolAdapter.countAvailableHashes();
-            log.info(String.format("Number of available hashes=%d", availableHashCount));
+            log.info("[Before] Number of available hashes={}", availableHashCount);
             int count = hashCountThreshold - availableHashCount;
-            generateHashes(count);
+            if(count>0){
+				generateHashes(count);
+			} else{
+				log.info("Hash generation not required. {} hashes are available in the pool.",hashCountThreshold);
+			}
+			availableHashCount = availableHashPoolAdapter.countAvailableHashes();
+			log.info("[After] Number of available hashes={}", availableHashCount);
         } catch (Exception e) {
             log.error("error while running HashGenerationJob", e);
         } finally {
             if(lock != null)
                 redisLockService.unlock(lock);
         }
+		log.info("Hash generation job completed");
 	}
-	
+
 	public void generateHashes(int count) throws ShortUrlException {
 		
-		log.info("Running job for generating hashes");
+		log.info("Generating hashes in bulk count={}", count);
 		int numberOfHashesGenerated = 0;
-		while(numberOfHashesGenerated < count) {			
-			long randomId = urlServiceUtil.getRandomId(hashLength);
-			String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
-			
-			if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
-				
-				availableHashPoolAdapter.addHashToPool(shortUrlHash);
-				hashArchiveAdapter.addHashToArchive(shortUrlHash);
-				numberOfHashesGenerated++;
+		while(numberOfHashesGenerated < count) {
+			try {
+
+				long randomId = urlServiceUtil.getRandomId(hashLength);
+				String shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+
+				if(urlServiceUtil.isHashValid(shortUrlHash) && !hashArchiveAdapter.isHashUsed(shortUrlHash)) {
+
+					availableHashPoolAdapter.addHashToPool(shortUrlHash);
+					hashArchiveAdapter.addHashToArchive(shortUrlHash);
+					numberOfHashesGenerated++;
+				}
+				log.info("countToBeGenerated={} numberOfHashesGenerated={}",count,numberOfHashesGenerated);
+
+			} catch (Exception e){
+				log.error("Error while generating/saving hash countToBeGenerated={} numberOfHashesGenerated={}",count,numberOfHashesGenerated, e);
+				count--;
 			}
 		}
-		log.info("Hash generation job completed");
-		
+		log.info("Generated hashes in bulk count={}", count);
 	}
 
 	@Scheduled(cron = "${hash_deletion_cron}")
@@ -102,5 +123,52 @@ public class HashGenerationJob {
             if(lock != null)
                 redisLockService.unlock(lock);
         }
+	}
+
+	public String getHash(){
+		long t1 = System.currentTimeMillis();
+		Lock lock = null;
+		String shortUrlHash = null;
+		try {
+			long randomId = urlServiceUtil.getRandomId(hashLength);
+			shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+			lock = redisLockService.tryLockOnEntity("createShortUrlHash_"+shortUrlHash, RegistryKey.HASH_CREATION);
+			if (lock == null || !lock.tryLock()) {
+				log.warn(" Failed to acquire lock");
+			}
+			while(!urlServiceUtil.isHashValid(shortUrlHash) || hashArchiveAdapter.isHashUsed(shortUrlHash)) {
+				randomId = urlServiceUtil.getRandomId(hashLength);
+				shortUrlHash = urlServiceUtil.convertIdToHash(randomId, hashLength);
+			}
+			hashArchiveAdapter.addHashToArchive(shortUrlHash);
+			return shortUrlHash;
+		} catch (Exception e){
+			log.error("error while generating hash", e);
+			return null;
+		} finally {
+			if(lock != null) {
+				redisLockService.unlock(lock);
+			}
+			log.info("Time taken to getHash {} for shortUrl is {}ms",shortUrlHash, System.currentTimeMillis()-t1);
+		}
+	}
+
+	@Async
+	public void generateHashesAsync(){
+		Lock lock = null;
+		try {
+			lock = redisLockService.tryLockOnEntity("runHashGeneration", RegistryKey.HASH_GENERATION_ONDEMAND);
+			if (lock == null || !lock.tryLock()) {
+				log.info(" Failed to acquire lock");
+				return;
+			}
+			generateHashes(onDemandHashCount);
+		} catch (Exception e){
+			log.error("error while running HashGeneration OnDemand", e);
+		} finally {
+			if(lock != null) {
+				redisLockService.unlock(lock);
+			}
+		}
 	}
 }
