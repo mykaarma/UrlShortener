@@ -95,6 +95,7 @@ public class HashGenerationJob {
 					hashArchiveAdapter.addHashToArchive(shortUrlHash);
 					numberOfHashesGenerated++;
 				}
+				log.info("countToBeGenerated={} numberOfHashesGenerated={}",count,numberOfHashesGenerated);
 
 			} catch (Exception e){
 				log.error("Error while generating/saving hash countToBeGenerated={} numberOfHashesGenerated={}",count,numberOfHashesGenerated, e);
