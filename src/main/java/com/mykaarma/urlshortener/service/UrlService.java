@@ -3,7 +3,6 @@ package com.mykaarma.urlshortener.service;
 import java.util.Date;
 import java.util.Map;
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
-import com.mykaarma.urlshortener.scheduled.HashGenerationJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -29,18 +28,15 @@ public class UrlService {
 	
 	private ShortUrlCacheAdapter shortUrlCacheAdapter;
 
-	private HashGenerationJob hashGenerationJob;
-
 	@Value("${hash_length:8}")
 	private int hashLength;
 
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter shortUrlDatabaseAdapter, ShortUrlCacheAdapter shortUrlCacheAdapter, HashGenerationJob hashGenerationJob) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter shortUrlDatabaseAdapter, ShortUrlCacheAdapter shortUrlCacheAdapter) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.shortUrlDatabaseAdapter = shortUrlDatabaseAdapter;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
-		this.hashGenerationJob = hashGenerationJob;
 	}
 
 	/**
