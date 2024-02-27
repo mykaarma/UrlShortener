@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Date;
 
+import com.mykaarma.urlshortener.persistence.HashArchiveAdapter;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlInternalServerException;
-import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +28,12 @@ public class UrlServiceUtil {
 	
 	@Value("${random_alphabet:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}")
 	private String randomAlphabet;
-	
-	private ShortUrlDatabaseAdapter urlRepository;
+
+	private HashArchiveAdapter hashArchiveAdapter;
 	
 	@Autowired
-	public UrlServiceUtil(ShortUrlDatabaseAdapter urlRepository) {
-		
-		this.urlRepository = urlRepository;
+	public UrlServiceUtil(HashArchiveAdapter hashArchiveAdapter) {
+		this.hashArchiveAdapter = hashArchiveAdapter;
 	}
 	
 	private static String[] blackListedWords = null;
@@ -213,7 +212,7 @@ public class UrlServiceUtil {
 		long t1 = System.currentTimeMillis();
 		long randomId = getRandomId(hashLength);
 		String shortUrlHash = convertIdToHash(randomId, hashLength);
-		while(!isHashValid(shortUrlHash)) {
+		while(!isHashValid(shortUrlHash) || hashArchiveAdapter.isHashUsed(shortUrlHash)) {
 			randomId = getRandomId(hashLength);
 			shortUrlHash = convertIdToHash(randomId, hashLength);
 		}
