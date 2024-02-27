@@ -29,7 +29,6 @@ public class UrlServiceUtil {
 	@Value("${random_alphabet:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}")
 	private String randomAlphabet;
 	
-	
 	private ShortUrlDatabaseAdapter urlRepository;
 	
 	@Autowired
@@ -208,6 +207,18 @@ public class UrlServiceUtil {
 				}
 			}
 		}	
+	}
+
+	public String generateValidHash(int hashLength){
+		long t1 = System.currentTimeMillis();
+		long randomId = getRandomId(hashLength);
+		String shortUrlHash = convertIdToHash(randomId, hashLength);
+		while(!isHashValid(shortUrlHash)) {
+			randomId = getRandomId(hashLength);
+			shortUrlHash = convertIdToHash(randomId, hashLength);
+		}
+		log.info("Time taken to generate a hash {} is {}ms",shortUrlHash, System.currentTimeMillis()-t1);
+		return shortUrlHash;
 	}
 	
 }

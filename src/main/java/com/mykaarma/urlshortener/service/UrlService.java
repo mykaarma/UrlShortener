@@ -5,15 +5,14 @@ import java.util.Map;
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
 import com.mykaarma.urlshortener.scheduled.HashGenerationJob;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
 import com.mykaarma.urlshortener.exception.BadShorteningRequestException;
 import com.mykaarma.urlshortener.exception.ShortUrlException;
 import com.mykaarma.urlshortener.exception.ShortUrlNotFoundException;
-import com.mykaarma.urlshortener.model.AvailableHashPool;
 import com.mykaarma.urlshortener.model.UrlDetails;
-import com.mykaarma.urlshortener.persistence.AvailableHashPoolAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlCacheAdapter;
 import com.mykaarma.urlshortener.persistence.ShortUrlDatabaseAdapter;
 import com.mykaarma.urlshortener.util.UrlServiceUtil;
@@ -26,22 +25,21 @@ public class UrlService {
 	
 	private UrlServiceUtil urlServiceUtil;
 	
-	private ShortUrlDatabaseAdapter urlRepository;
+	private ShortUrlDatabaseAdapter shortUrlDatabaseAdapter;
 	
 	private ShortUrlCacheAdapter shortUrlCacheAdapter;
-	
-	private AvailableHashPoolAdapter availableHashPoolAdapter;
 
 	private HashGenerationJob hashGenerationJob;
 
-	
+	@Value("${hash_length:8}")
+	private int hashLength;
+
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter urlRepository, ShortUrlCacheAdapter shortUrlCacheAdapter, AvailableHashPoolAdapter availableHashPoolAdapter, HashGenerationJob hashGenerationJob) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter shortUrlDatabaseAdapter, ShortUrlCacheAdapter shortUrlCacheAdapter, HashGenerationJob hashGenerationJob) {
 		
 		this.urlServiceUtil = urlServiceUtil;
-		this.urlRepository = urlRepository;
+		this.shortUrlDatabaseAdapter = shortUrlDatabaseAdapter;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
-		this.availableHashPoolAdapter = availableHashPoolAdapter;
 		this.hashGenerationJob = hashGenerationJob;
 	}
 
@@ -57,7 +55,7 @@ public class UrlService {
 	 */
 	private UrlDetails checkExisting(String longUrl, String shortUrlDomain, String businessUUID, Map<String, String> additionalParams,boolean overwrite, Date expiryDate)
 	{
-		UrlDetails existingShortUrl = urlRepository.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
+		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
 
 		if (existingShortUrl != null) {
 
@@ -79,7 +77,7 @@ public class UrlService {
 				}
 			}
 			try {
-				urlRepository.saveUrl(existingShortUrl);
+				shortUrlDatabaseAdapter.saveUrl(existingShortUrl);
 			} catch (ShortUrlException e) {
 				throw new ShortUrlException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Failed to update the url details in the database");
 			}
@@ -126,19 +124,7 @@ public class UrlService {
 		{
 			return existingShortUrl;
 		}
-		AvailableHashPool hashPool = availableHashPoolAdapter.fetchAvailableShortUrlHash();
-		String shortUrlHash;
-		if(hashPool == null) {
-			log.warn("All hashes have been exhausted. Generate new ones to keep the microservice running.");
-			shortUrlHash = hashGenerationJob.getHash();
-			hashGenerationJob.generateHashesAsync();
-		} else {
-			shortUrlHash = hashPool.getShortUrlHash();
-			availableHashPoolAdapter.removeHashFromPool(shortUrlHash);
-		}
-		if(shortUrlHash==null){
-			throw new ShortUrlException(UrlErrorCodes.HASH_NOT_FETCHED, UrlErrorCodes.HASH_NOT_FETCHED.getErrorDescription());
-		}
+		String shortUrlHash = urlServiceUtil.generateValidHash(hashLength);
 		UrlDetails shortUrlDetails = new UrlDetails(shortUrlHash, shortUrlDomain, longUrl, null, new Date(), expiryDate, businessUUID,
 				additionalParams, new Date(), true);
 
@@ -151,13 +137,12 @@ public class UrlService {
 		else{
 			urlPrefix = "";
 		}
-
 		String shortUrl = shortUrlDomain + urlPrefix + shortUrlHash;
 
 		shortUrlDetails.setShortUrl(shortUrl);
 
 		try {
-			urlRepository.saveUrl(shortUrlDetails);
+			shortUrlDatabaseAdapter.saveUrl(shortUrlDetails);
 		}
 		catch (ShortUrlDuplicateException e)
 		{
@@ -272,7 +257,7 @@ public class UrlService {
 	 */
 	private UrlDetails getExistingShortUrlDetails(String shortUrlHash) throws ShortUrlException {
 
-		UrlDetails existingShortUrl = urlRepository.getUrlDetailsByShortUrlHash(shortUrlHash);
+		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getUrlDetailsByShortUrlHash(shortUrlHash);
 		return existingShortUrl;
 	}
 	
