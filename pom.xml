@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.mykaarma</groupId>
 	<artifactId>urlshortener</artifactId>
-	<version>0.0.8</version>
+	<version>0.1.0</version>
 	<packaging>jar</packaging>
 	<name>urlshortener</name>
 	<url>http://maven.apache.org</url>
