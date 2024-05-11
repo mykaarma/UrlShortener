@@ -1,6 +1,8 @@
 package com.mykaarma.urlshortener.util;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Date;
@@ -218,6 +220,28 @@ public class UrlServiceUtil {
 		}
 		log.info("Time taken to generate a hash {} is {}ms",shortUrlHash, System.currentTimeMillis()-t1);
 		return shortUrlHash;
+	}
+
+	/**
+	 * This function generates key which will be used by redis for obtain lock.
+	 * Encoding of URL is done to ensure that there are no characters that could potentially interfere with key naming conventions in Redis
+	 * @param businessUuid
+	 * @param longUrl
+	 * @param domainName
+	 * @return lockKey
+	 * @throws Exception
+	 */
+
+	public String getRedisKeyForCreateShortUrl(String businessUuid, String longUrl, String domainName) {
+		String encodedLongUrl = null;
+		try {
+			encodedLongUrl = URLEncoder.encode(longUrl, "UTF-8");
+		} catch (Exception e) {
+			log.error(" Could not encode long URL for generating redis key ", e);
+			return null;
+		}
+		String lockKey = businessUuid + ":" + domainName + ":" + encodedLongUrl;
+		return lockKey;
 	}
 	
 }
