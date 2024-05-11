@@ -234,13 +234,21 @@ public class UrlServiceUtil {
 
 	public String getRedisKeyForCreateShortUrl(String businessUuid, String longUrl, String domainName) {
 		String encodedLongUrl = null;
+		String encodedDomainName = null;
 		try {
 			encodedLongUrl = URLEncoder.encode(longUrl, "UTF-8");
 		} catch (Exception e) {
 			log.error(" Could not encode long URL for generating redis key ", e);
 			return null;
 		}
-		String lockKey = businessUuid + ":" + domainName + ":" + encodedLongUrl;
+
+		try {
+			encodedDomainName = URLEncoder.encode(domainName, "UTF-8");
+		} catch (Exception e) {
+			log.error(" Could not encode domain name for generating redis key ", e);
+			return null;
+		}
+		String lockKey = businessUuid + ":" + encodedDomainName + ":" + encodedLongUrl;
 		return lockKey;
 	}
 	
