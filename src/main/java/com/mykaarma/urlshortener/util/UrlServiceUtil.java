@@ -232,7 +232,7 @@ public class UrlServiceUtil {
 	 * @throws Exception
 	 */
 
-	public String getRedisKeyForCreateShortUrl(String businessUuid, String longUrl, String domainName) {
+	public static String getRedisKeyForCreateShortUrl(String businessUuid, String longUrl, String domainName) {
 		String encodedLongUrl = null;
 		String encodedDomainName = null;
 		try {

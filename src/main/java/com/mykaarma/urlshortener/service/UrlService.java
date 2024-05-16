@@ -113,7 +113,7 @@ public class UrlService {
 		}
 
 		// Obtain lock for further processing after validation is passed
-		String shortenUrlLockKey = urlServiceUtil.getRedisKeyForCreateShortUrl(businessUUID,longUrl,shortUrlDomain);
+		String shortenUrlLockKey = UrlServiceUtil.getRedisKeyForCreateShortUrl(businessUUID,longUrl,shortUrlDomain);
 		if(shortenUrlLockKey == null) {
 			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "could not create key for lock");
 		}
