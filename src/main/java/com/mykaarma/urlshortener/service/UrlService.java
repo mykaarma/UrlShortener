@@ -64,7 +64,7 @@ public class UrlService {
 	 */
 	private UrlDetails checkExisting(String longUrl, String shortUrlDomain, String businessUUID, Map<String, String> additionalParams,boolean overwrite, Date expiryDate)
 	{
-		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
+		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
 
 		if (existingShortUrl != null) {
 
