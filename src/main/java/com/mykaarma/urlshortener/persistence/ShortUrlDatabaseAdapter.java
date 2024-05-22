@@ -15,6 +15,8 @@ public interface ShortUrlDatabaseAdapter {
 	public UrlDetails getUrlDetailsByShortUrlHash(String shortUrlHash) throws ShortUrlException;
 	
 	public UrlDetails getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(String longUrl, String businessUUID, String shortUrlDomain) throws ShortUrlException;
+
+	public UrlDetails getUrlDetailsByLongUrlAndBusinessUUIDAndDomain(String longUrl, String businessUUID, String shortUrlDomain) throws ShortUrlException;
 	
 	public void updateLastAccessedTimestamp(UrlDetails urlDetails, Date lastAccessedTimestamp) throws ShortUrlException;
 	

@@ -2,10 +2,16 @@ package com.mykaarma.urlshortener.service;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
 import com.mykaarma.urlshortener.exception.ShortUrlDuplicateException;
+import com.mykaarma.urlshortener.exception.ShortUrlInternalServerException;
+import com.mykaarma.urlshortener.model.RegistryKey;
 import com.mykaarma.urlshortener.persistence.HashArchiveAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.stereotype.Service;
 
 import com.mykaarma.urlshortener.enums.UrlErrorCodes;
@@ -31,16 +37,19 @@ public class UrlService {
 
 	private HashArchiveAdapter hashArchiveAdapter;
 
+	private RedisLockService redisLockService;
+
 	@Value("${hash_length:8}")
 	private int hashLength;
 
 	@Autowired
-	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter shortUrlDatabaseAdapter, ShortUrlCacheAdapter shortUrlCacheAdapter, HashArchiveAdapter hashArchiveAdapter) {
+	public UrlService(UrlServiceUtil urlServiceUtil, ShortUrlDatabaseAdapter shortUrlDatabaseAdapter, ShortUrlCacheAdapter shortUrlCacheAdapter, HashArchiveAdapter hashArchiveAdapter, RedisLockService redisLockService) {
 		
 		this.urlServiceUtil = urlServiceUtil;
 		this.shortUrlDatabaseAdapter = shortUrlDatabaseAdapter;
 		this.shortUrlCacheAdapter = shortUrlCacheAdapter;
 		this.hashArchiveAdapter = hashArchiveAdapter;
+		this.redisLockService = redisLockService;
 	}
 
 	/**
@@ -55,7 +64,7 @@ public class UrlService {
 	 */
 	private UrlDetails checkExisting(String longUrl, String shortUrlDomain, String businessUUID, Map<String, String> additionalParams,boolean overwrite, Date expiryDate)
 	{
-		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getActiveUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
+		UrlDetails existingShortUrl = shortUrlDatabaseAdapter.getUrlDetailsByLongUrlAndBusinessUUIDAndDomain(longUrl, businessUUID, shortUrlDomain);
 
 		if (existingShortUrl != null) {
 
@@ -103,17 +112,36 @@ public class UrlService {
 
 		}
 
-		Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
-		UrlDetails existingShortUrl = checkExisting(longUrl,shortUrlDomain,businessUUID,additionalParams,overwrite,expiryDate);
-		if(existingShortUrl!=null) {
-			return existingShortUrl;
+		// Obtain lock for further processing after validation is passed
+		String shortenUrlLockKey = UrlServiceUtil.getRedisKeyForCreateShortUrl(businessUUID,longUrl,shortUrlDomain);
+		if(shortenUrlLockKey == null) {
+			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "could not create key for lock");
 		}
-		log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
-		int retryCount = 1;
-		UrlDetails shortUrlDetails;
-		shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite, requestId);
-		return shortUrlDetails;
+		Lock shortenUrlLock = null;
+		try {
+			shortenUrlLock = redisLockService.tryLockOnEntity(shortenUrlLockKey, RegistryKey.CREATE_SHORT_URL, 1000L);
+			if (shortenUrlLock == null || !shortenUrlLock.tryLock(5, TimeUnit.SECONDS)) {
+				log.error(" Failed to acquire lock for longUrl={} businessUUID={} shortUrlDomain={} ", longUrl, businessUUID, shortUrlDomain);
+				throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "unable to acquire lock");
 
+			}
+
+			Date expiryDate = urlServiceUtil.findExpiryDate(expiryDuration);
+			UrlDetails existingShortUrl = checkExisting(longUrl,shortUrlDomain,businessUUID,additionalParams,overwrite,expiryDate);
+			if(existingShortUrl!=null) {
+				return existingShortUrl;
+			}
+			log.info(String.format("Creating a new shortUrl for longUrl=%s and businessUUID=%s", longUrl, businessUUID));
+			int retryCount = 1;
+			UrlDetails shortUrlDetails;
+			shortUrlDetails = createShortUrl(shortUrlDomain, longUrl, expiryDate, businessUUID, additionalParams, urlPrefix, retryCount,overwrite, requestId);
+			return shortUrlDetails;
+		} catch (Exception e) {
+			log.error(" Some error occurred while shortening the url longUrl={} businessUUID={} shortUrlDomain={} ", longUrl, businessUUID, shortUrlDomain, e);
+			throw  new ShortUrlInternalServerException(UrlErrorCodes.SHORT_URL_INTERNAL_SERVER_ERROR, "Internal Server Error");
+		} finally {
+			redisLockService.unlock(shortenUrlLock);
+		}
 	}
 
 	private UrlDetails createShortUrl(String shortUrlDomain, String longUrl, Date expiryDate, String businessUUID, Map<String, String> additionalParams,String urlPrefix,int retryCount,boolean overwrite, String requestId) {
