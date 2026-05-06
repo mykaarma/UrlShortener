@@ -255,10 +255,25 @@ public class UrlService {
 		}
 		
 		shortUrlCacheAdapter.saveInCache(shortUrlHash, existingUrlDetails, ttl);
-		
+
 		return existingUrlDetails;
 	}
-	
+
+	/**
+	 * Returns the persisted {@link UrlDetails} for {@code shortUrlHash} regardless of expiry.
+	 * Returns {@code null} only when the hash is genuinely absent from the data store.
+	 * Callers can use this after {@link #getShortUrlDetails(String)} has thrown
+	 * {@link ShortUrlNotFoundException} to recover dealer/business context (e.g. businessUUID)
+	 * for rendering dealer-specific error pages.
+	 */
+	public UrlDetails getShortUrlDetailsIncludingExpired(String shortUrlHash) {
+		UrlDetails cached = shortUrlCacheAdapter.fetchUrlDetailsFromCache(shortUrlHash);
+		if (cached != null) {
+			return cached;
+		}
+		return getExistingShortUrlDetails(shortUrlHash);
+	}
+
 	/**
 	 * Returns the HTML response redirecting to the longUrl
 	 * @param longUrl
