@@ -271,7 +271,7 @@ public class UrlService {
 		if (cached != null) {
 			return cached;
 		}
-		return getExistingShortUrlDetails(shortUrlHash);
+		return shortUrlDatabaseAdapter.getUrlDetailsByShortUrlHashIncludingExpired(shortUrlHash);
 	}
 
 	/**
