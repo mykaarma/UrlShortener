@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class UrlErrorDTO implements Serializable {
 
 	/** The Constant serialVersionUID. */
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L; // Added a comment
 
     /** The error code. */
     private int errorCode;
