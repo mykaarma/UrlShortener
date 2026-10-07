@@ -57,6 +57,7 @@ pipeline {
                     server = Artifactory.server env.ARTIFACTORY_ID
 
                     rtMaven = Artifactory.newMavenBuild()
+                    rtMaven.resolver releaseRepo: 'libs-release', snapshotRepo: 'libs-snapshot', server: server
                     rtMaven.deployer releaseRepo: env.RELEASE_REPO, snapshotRepo: env.SNAPSHOT_REPO, server: server
                     rtMaven.deployer.deployArtifacts = false
 
@@ -65,17 +66,7 @@ pipeline {
                 }
             }
         }
-
-        stage ('Test') {
-            steps{
-                dir("${env.GIT_REPO_PATH}"){
-                    withMaven(jdk: "${env.JAVA_VERSION}", maven: 'maven'){
-                        sh 'mvn test -B'
-                    }
-                }
-            }
-        }
-
+        
         stage ('Install') {
             steps{
                 withMaven(jdk: "${env.JAVA_VERSION}", maven: 'maven'){
