@@ -9,7 +9,7 @@ pipeline {
         ARTIFACTORY_ID = 'artifactory'
         RELEASE_REPO = 'libs-release-local'
         SNAPSHOT_REPO = 'libs-snapshot-local'
-        JAVA_VERSION = 'Java8'
+        JAVA_VERSION = 'Java17'
         GIT_REPO_URL = 'https://github.com/mykaarma/UrlShortener.git'
         GIT_REPO_PATH = './'
     }
