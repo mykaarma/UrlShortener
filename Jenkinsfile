@@ -1,7 +1,6 @@
 def server
 def buildInfo
 def rtMaven
-def artifactInfo
 pipeline {
     agent any
 
@@ -35,13 +34,15 @@ pipeline {
         stage('QA remote Trriger'){
             steps{
                 script{
-                    def url = env.EXTERNAL_JENKINS_URL
+                    def url = env.EXTERNAL_JENKINS_URL ?: ''
                     if (!url.contains("qa-ci")) {
                         try{
-                            final String remoteJobUrl = "https://qa-ci-k8s.mykaarma.com/job/${env.JOB_NAME}/buildWithParameters?branch=${params.branch}"
-                            withCredentials([usernameColonPassword(credentialsId: "qa-k8s-jenkins-api-token", variable: "API_TOKEN")]) {
-                                final String response = sh(script: "curl -X POST -u $API_TOKEN -s -o /dev/null -w '%{http_code}' $remoteJobUrl", returnStdout: true).trim()
-                                echo response
+                            def remoteJobUrl = "https://qa-ci-k8s.mykaarma.com/job/${env.JOB_NAME}/buildWithParameters?branch=${params.branch}"
+                            withEnv(["REMOTE_JOB_URL=${remoteJobUrl}"]) {
+                                withCredentials([usernameColonPassword(credentialsId: "qa-k8s-jenkins-api-token", variable: "API_TOKEN")]) {
+                                    def response = sh(script: '''curl -X POST -u "$API_TOKEN" -s -o /dev/null -w '%{http_code}' "$REMOTE_JOB_URL"''', returnStdout: true).trim()
+                                    echo "Remote trigger HTTP status: ${response}"
+                                }
                             }
                         }catch(e){
                             echo "An error occurred: ${e}"
@@ -72,7 +73,7 @@ pipeline {
                 withMaven(jdk: "${env.JAVA_VERSION}", maven: 'maven'){
                     script{
                         dir("${env.GIT_REPO_PATH}"){
-                            artifactInfo = rtMaven.run pom: "pom.xml", goals: 'clean install -DskipTests'
+                            rtMaven.run pom: 'pom.xml', goals: 'clean install -DskipTests', buildInfo: buildInfo
                         }
                     }
                 }
@@ -82,7 +83,7 @@ pipeline {
         stage ('Deploy') {
             steps{
                 script{
-                    rtMaven.deployer.deployArtifacts artifactInfo
+                    rtMaven.deployer.deployArtifacts buildInfo
                 }
             }
         }
